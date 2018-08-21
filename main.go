@@ -11,9 +11,7 @@ import (
 	"time"
 )
 
-var (
-	url
-)
+var url string
 
 func init() {
 	flag.StringVar(&url, "url", ":4444", "Host:Port address. ")
