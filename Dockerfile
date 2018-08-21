@@ -15,7 +15,6 @@ FROM golang:1.10.3 as builder
 WORKDIR /go/src/github.com/eclipse/che-machine-exec/
 COPY . .
 RUN go get -u github.com/golang/dep/cmd/dep && \
-    dep ensure && \
     ./compile.sh
 
 FROM registry.centos.org/centos:7
