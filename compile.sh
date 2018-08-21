@@ -1,11 +1,12 @@
 #!/bin/bash
-# Copyright (c) 2018 Red Hat, Inc.
-# All rights reserved. This program and the accompanying materials
-# are made available under the terms of the Eclipse Public License v1.0
-# which accompanies this distribution, and is available at
-# http://www.eclipse.org/legal/epl-v10.html
-
-echo "===>Begin build machine-exec-server binary<===";
+#
+# Copyright (c) 2012-2017 Red Hat, Inc.
+# This program and the accompanying materials are made
+# available under the terms of the Eclipse Public License 2.0
+# which is available at https://www.eclipse.org/legal/epl-2.0/
+#
+# SPDX-License-Identifier: EPL-2.0
+#
 
 function resolveDependencies() {
     echo "===>Resolve go-lang dependencies with help dep tool<===";
@@ -19,9 +20,9 @@ function resolveDependencies() {
 function compile() {
     resolveDependencies;
 
-    echo "===>Compile machine-exec-server binary from source code.<===";
+    echo "===>Compile che-machine-exec binary from source code.<===";
 
-    $(CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o che-machine-exec .);
+    $(CGO_ENABLED=0 GOOS=linux go build -a -ldflags '-w -s' -a -installsuffix cgo -o che-machine-exec .);
 
     if [ $? != 0 ]; then
         echo "Failed to compile code";

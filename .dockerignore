@@ -1,4 +1,2 @@
-*
-!machine-exec-server
-machine-exec-server/vendor
-
+!che-machine-exec
+vendor/
