@@ -13,7 +13,7 @@
 package jsonrpc
 
 import (
-	"github.com/eclipse/che-theia-terminal-plugin/machine-exec-server/api/model"
+	"github.com/eclipse/che-machine-exec/api/model"
 	"github.com/eclipse/che/agents/go-agents/core/jsonrpc"
 )
 

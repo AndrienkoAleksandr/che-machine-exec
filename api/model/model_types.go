@@ -17,7 +17,7 @@ import (
 	"fmt"
 	"github.com/docker/docker/api/types"
 	"github.com/eclipse/che-lib/websocket"
-	"github.com/eclipse/che-theia-terminal-plugin/machine-exec-server/line-buffer"
+	"github.com/eclipse/che-machine-exec/line-buffer"
 	"log"
 	"sync"
 )

@@ -14,8 +14,8 @@ package main
 
 import (
 	"flag"
-	jsonRpcApi "github.com/eclipse/che-theia-terminal-plugin/machine-exec-server/api/jsonrpc"
-	"github.com/eclipse/che-theia-terminal-plugin/machine-exec-server/api/websocket"
+	jsonRpcApi "github.com/eclipse/che-machine-exec/api/jsonrpc"
+	"github.com/eclipse/che-machine-exec/api/websocket"
 	"github.com/eclipse/che/agents/go-agents/core/jsonrpc"
 	"github.com/eclipse/che/agents/go-agents/core/jsonrpc/jsonrpcws"
 	"github.com/eclipse/che/agents/go-agents/core/rest"

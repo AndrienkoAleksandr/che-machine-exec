@@ -86,20 +86,6 @@
   version = "6.4.0"
 
 [[projects]]
-  branch = "master"
-  digest = "1:6fbe025677df698d70993cb7b06b676e6e05c60c9a79a4beabbd8e5cf3585ef6"
-  name = "github.com/eclipse/che-theia-terminal-plugin"
-  packages = [
-    "machine-exec-server/api/jsonrpc",
-    "machine-exec-server/api/model",
-    "machine-exec-server/api/websocket",
-    "machine-exec-server/exec",
-    "machine-exec-server/line-buffer",
-  ]
-  pruneopts = "UT"
-  revision = "b57b40eb2088271dc24f538f224f8c1ac474a777"
-
-[[projects]]
   digest = "1:ccfa094742ce1c97fd3f6481e1bf98f3d9862510eee2bc0eb56e2745396bd330"
   name = "github.com/julienschmidt/httprouter"
   packages = ["."]
@@ -144,11 +130,6 @@
     "github.com/docker/docker/api/types/filters",
     "github.com/docker/docker/client",
     "github.com/eclipse/che-lib/websocket",
-    "github.com/eclipse/che-theia-terminal-plugin/machine-exec-server/api/jsonrpc",
-    "github.com/eclipse/che-theia-terminal-plugin/machine-exec-server/api/model",
-    "github.com/eclipse/che-theia-terminal-plugin/machine-exec-server/api/websocket",
-    "github.com/eclipse/che-theia-terminal-plugin/machine-exec-server/exec",
-    "github.com/eclipse/che-theia-terminal-plugin/machine-exec-server/line-buffer",
     "github.com/eclipse/che/agents/go-agents/core/jsonrpc",
     "github.com/eclipse/che/agents/go-agents/core/jsonrpc/jsonrpcws",
     "github.com/eclipse/che/agents/go-agents/core/rest",
