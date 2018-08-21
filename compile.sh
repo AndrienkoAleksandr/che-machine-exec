@@ -21,7 +21,7 @@ function compile() {
 
     echo "===>Compile machine-exec-server binary from source code.<===";
 
-    $(CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o machine-exec-server .);
+    $(CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o che-machine-exec .);
 
     if [ $? != 0 ]; then
         echo "Failed to compile code";
