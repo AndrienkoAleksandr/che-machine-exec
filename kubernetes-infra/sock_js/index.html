@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<script src="http://cdn.sockjs.org/sockjs-0.3.js"></script>
+<script type="text/javascript">
+    document.addEventListener("DOMContentLoaded", function(event) {
+        // - Code to execute when all DOM content is loaded.
+        // - including fonts, images, etc.
+        var sock = new SockJS('http://127.0.0.1:8081/echo');
+        sock.onopen = function() {
+            console.log('open');
+            sock.send(JSON.stringify({'Op': 'bind', 'SessionID': "9ipnsbe9"}));
+            //sock.send('test');
+        };
+
+        sock.onmessage = function(e) {
+            console.log('message', e.data);
+            // sock.close();
+        };
+
+        sock.onclose = function() {
+            console.log('close');
+        };
+    });
+</script>
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+
+</body>
+</html>

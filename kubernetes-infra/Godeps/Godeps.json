@@ -4,6 +4,14 @@
 	"GodepVersion": "v80",
 	"Deps": [
 		{
+			"ImportPath": "github.com/docker/spdystream",
+			"Rev": "449fdfce4d962303d702fec724ef0ad181c92528"
+		},
+		{
+			"ImportPath": "github.com/docker/spdystream/spdy",
+			"Rev": "449fdfce4d962303d702fec724ef0ad181c92528"
+		},
+		{
 			"ImportPath": "github.com/ghodss/yaml",
 			"Rev": "73d445a93680fa1a78ae23a5839bad48f32ba1ee"
 		},
@@ -56,6 +64,11 @@
 		{
 			"ImportPath": "github.com/googleapis/gnostic/extensions",
 			"Rev": "0c5108395e2debce0d731cf0287ddf7242066aba"
+		},
+		{
+			"ImportPath": "github.com/gorilla/websocket",
+			"Comment": "v1.3.0",
+			"Rev": "3ff3320c2a1756a3691521efc290b4701575147c"
 		},
 		{
 			"ImportPath": "github.com/howeyc/gopass",
@@ -127,6 +140,11 @@
 		{
 			"ImportPath": "golang.org/x/time/rate",
 			"Rev": "f51c12702a4d776e4c1fa9b0fabab841babae631"
+		},
+		{
+			"ImportPath": "gopkg.in/igm/sockjs-go.v2/sockjs",
+			"Comment": "v2.0.0",
+			"Rev": "d276e9ffe5cc5c271b81198cc77a2adf6c4482d2"
 		},
 		{
 			"ImportPath": "gopkg.in/inf.v0",
@@ -393,6 +411,16 @@
 			"Rev": "302974c03f7e50f16561ba237db776ab93594ef6"
 		},
 		{
+			"ImportPath": "k8s.io/apimachinery/pkg/util/httpstream",
+			"Comment": "kubernetes-1.10.3-beta.0",
+			"Rev": "302974c03f7e50f16561ba237db776ab93594ef6"
+		},
+		{
+			"ImportPath": "k8s.io/apimachinery/pkg/util/httpstream/spdy",
+			"Comment": "kubernetes-1.10.3-beta.0",
+			"Rev": "302974c03f7e50f16561ba237db776ab93594ef6"
+		},
+		{
 			"ImportPath": "k8s.io/apimachinery/pkg/util/intstr",
 			"Comment": "kubernetes-1.10.3-beta.0",
 			"Rev": "302974c03f7e50f16561ba237db776ab93594ef6"
@@ -404,6 +432,11 @@
 		},
 		{
 			"ImportPath": "k8s.io/apimachinery/pkg/util/net",
+			"Comment": "kubernetes-1.10.3-beta.0",
+			"Rev": "302974c03f7e50f16561ba237db776ab93594ef6"
+		},
+		{
+			"ImportPath": "k8s.io/apimachinery/pkg/util/remotecommand",
 			"Comment": "kubernetes-1.10.3-beta.0",
 			"Rev": "302974c03f7e50f16561ba237db776ab93594ef6"
 		},
@@ -444,6 +477,11 @@
 		},
 		{
 			"ImportPath": "k8s.io/apimachinery/pkg/watch",
+			"Comment": "kubernetes-1.10.3-beta.0",
+			"Rev": "302974c03f7e50f16561ba237db776ab93594ef6"
+		},
+		{
+			"ImportPath": "k8s.io/apimachinery/third_party/forked/golang/netutil",
 			"Comment": "kubernetes-1.10.3-beta.0",
 			"Rev": "302974c03f7e50f16561ba237db776ab93594ef6"
 		},
@@ -673,12 +711,27 @@
 			"Rev": "989be4278f353e42f26c416c53757d16fcff77db"
 		},
 		{
+			"ImportPath": "k8s.io/client-go/tools/remotecommand",
+			"Comment": "kubernetes-1.10.2-beta.0",
+			"Rev": "989be4278f353e42f26c416c53757d16fcff77db"
+		},
+		{
 			"ImportPath": "k8s.io/client-go/transport",
 			"Comment": "kubernetes-1.10.2-beta.0",
 			"Rev": "989be4278f353e42f26c416c53757d16fcff77db"
 		},
 		{
+			"ImportPath": "k8s.io/client-go/transport/spdy",
+			"Comment": "kubernetes-1.10.2-beta.0",
+			"Rev": "989be4278f353e42f26c416c53757d16fcff77db"
+		},
+		{
 			"ImportPath": "k8s.io/client-go/util/cert",
+			"Comment": "kubernetes-1.10.2-beta.0",
+			"Rev": "989be4278f353e42f26c416c53757d16fcff77db"
+		},
+		{
+			"ImportPath": "k8s.io/client-go/util/exec",
 			"Comment": "kubernetes-1.10.2-beta.0",
 			"Rev": "989be4278f353e42f26c416c53757d16fcff77db"
 		},

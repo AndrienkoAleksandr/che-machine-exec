@@ -1,5 +1,12 @@
 rm -rf vendor/ && rm -rf Godeps/ && godep save
 
-dep restore ...
+godep restore ...
 
-and `dep save` to project
+and `godep save` to project
+
+
+docker build -t in-cluster2 .
+
+kubectl run --rm -i exec --image=in-cluster2 --image-pull-policy=Never
+
+kubectl delete deployment exec

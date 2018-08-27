@@ -15,4 +15,5 @@
 
 FROM debian
 COPY ./app /app
-ENTRYPOINT /app
+#ENTRYPOINT /app
+CMD tail -f /dev/null

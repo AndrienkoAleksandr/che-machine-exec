@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<script src="http://cdn.sockjs.org/sockjs-0.3.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fetch/2.0.4/fetch.min.js"></script>
+<script type="text/javascript">
+    document.addEventListener("DOMContentLoaded", function(event) {
+
+        fetch('http://127.0.0.1:4000/api/create').then(function (res) {
+            res.text().then(function (content) {
+                console.log("Content " + content);
+
+                var sessionId = content;
+
+                var sock = new SockJS('http://127.0.0.1:4000/api/sockjs');
+                sock.onopen = function() {
+                    console.log('open');
+                    sock.send(JSON.stringify({'Op': 'bind', 'SessionID': sessionId}));
+                    sock.send(JSON.stringify({'Op': 'resize', 'Cols': 80, 'Rows': 24}));
+                    // sock.send('test');
+                };
+
+                sock.onmessage = function(e) {
+                    console.log('message', e.data);
+                    // sock.close();
+                };
+
+                sock.onclose = function() {
+                    console.log('close');
+                };
+            });
+
+        }).catch(function (error) {
+            console.error(error)
+        });
+
+    });
+</script>
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+
+</body>
+</html>
