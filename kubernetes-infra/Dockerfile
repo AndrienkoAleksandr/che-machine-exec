@@ -13,7 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM debian
+FROM ubuntu:18.04
+RUN apt-get update -y && apt-get install -y curl
 COPY ./app /app
-#ENTRYPOINT /app
-CMD tail -f /dev/null
+ENTRYPOINT /app
+#CMD tail -f /dev/null

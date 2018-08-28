@@ -19,8 +19,6 @@ import (
 	//metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/remotecommand"
-	"k8s.io/client-go/tools/clientcmd"
-	"github.com/golang/glog"
 	"gopkg.in/igm/sockjs-go.v2/sockjs"
 	"encoding/json"
 	"net/http"
@@ -34,8 +32,8 @@ import (
 
 var (
 	namespace = "default"
-	podName = "nginx-deployment-6ddf4c5bf7-hpw78"
-	containerName = "nginx"
+	podName = "test-exec"
+	containerName = "exec"
 	cmd = []string{"/bin/sh"}
 	client *kubernetes.Clientset
 	config *rest.Config
@@ -87,17 +85,18 @@ func handleTerminalSession(session sockjs.Session) {
 }
 
 func createClient() *kubernetes.Clientset {
-	//creates the in-cluster config
-	//config, err := rest.InClusterConfig()
-	//if err != nil {
-	//	panic(err.Error())
-	//}
-
 	var err error
-	config, err = clientcmd.BuildConfigFromFlags("", "/home/user/.kube/config")
+
+	//creates the in-cluster config
+	config, err = rest.InClusterConfig()
 	if err != nil {
-		glog.Fatal(err)
+		panic(err.Error())
 	}
+
+	//config, err = clientcmd.BuildConfigFromFlags("", "/home/user/.kube/config")
+	//if err != nil {
+	//	glog.Fatal(err)
+	//}
 
 	// creates the clientset
 	clientset, err := kubernetes.NewForConfig(config)

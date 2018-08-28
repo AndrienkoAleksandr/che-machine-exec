@@ -5,13 +5,16 @@
 <script type="text/javascript">
     document.addEventListener("DOMContentLoaded", function(event) {
 
-        fetch('http://127.0.0.1:4000/api/create').then(function (res) {
+        // var url = 'http://127.0.0.1:4000';
+        var url = 'http://192.168.99.100:31579';
+
+        fetch(url + '/api/create').then(function (res) {
             res.text().then(function (content) {
                 console.log("Content " + content);
 
                 var sessionId = content;
 
-                var sock = new SockJS('http://127.0.0.1:4000/api/sockjs');
+                var sock = new SockJS(url + '/api/sockjs');
                 sock.onopen = function() {
                     console.log('open');
                     sock.send(JSON.stringify({'Op': 'bind', 'SessionID': sessionId}));
