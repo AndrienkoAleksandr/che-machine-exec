@@ -22,10 +22,10 @@ type ExecManager interface {
 }
 
 func CreateExecManager() (ExecManager, error)  {
-	if isKubernetesInfra() {
+	if IsKubernetesInfra() {
 		//return kubernetes machine exec impl
 	}
-	if isDockerInfra() {
+	if IsDockerInfra() {
 		// return docker machine exec impl
 	}
 	// todo cache exec manager
@@ -33,7 +33,7 @@ func CreateExecManager() (ExecManager, error)  {
 	return nil, nil
 }
 
-func isKubernetesInfra() bool {
+func IsKubernetesInfra() bool {
 	stat, err := os.Stat("/var/run/secrets/kubernetes.io/serviceaccount")
 	if err == nil && stat.IsDir() {
 		return true
@@ -42,7 +42,7 @@ func isKubernetesInfra() bool {
 	return false
 }
 
-func isDockerInfra() bool {
+func IsDockerInfra() bool {
 	stat, err := os.Stat("/var/run/docker.sock")
 	if err == nil && stat.Mode().IsRegular() {
 		return true

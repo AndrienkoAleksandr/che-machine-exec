@@ -15,7 +15,7 @@ package jsonrpc
 import (
 	"fmt"
 	"github.com/eclipse/che-machine-exec/api/model"
-	execManager "github.com/eclipse/che-machine-exec/exec"
+	execManager "github.com/eclipse/che-machine-exec/exec/docker-infra"
 	"github.com/eclipse/che/agents/go-agents/core/jsonrpc"
 	"strconv"
 )

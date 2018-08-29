@@ -28,6 +28,8 @@ import (
 	"k8s.io/client-go/kubernetes/scheme"
 	"encoding/hex"
 	"math/rand"
+	"github.com/golang/glog"
+	"k8s.io/client-go/tools/clientcmd"
 )
 
 var (
@@ -88,15 +90,15 @@ func createClient() *kubernetes.Clientset {
 	var err error
 
 	//creates the in-cluster config
-	config, err = rest.InClusterConfig()
-	if err != nil {
-		panic(err.Error())
-	}
-
-	//config, err = clientcmd.BuildConfigFromFlags("", "/home/user/.kube/config")
+	//config, err = rest.InClusterConfig()
 	//if err != nil {
-	//	glog.Fatal(err)
+	//	panic(err.Error())
 	//}
+
+	config, err = clientcmd.BuildConfigFromFlags("", "/home/user/.kube/config")
+	if err != nil {
+		glog.Fatal(err)
+	}
 
 	// creates the clientset
 	clientset, err := kubernetes.NewForConfig(config)
