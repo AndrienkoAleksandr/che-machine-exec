@@ -27,8 +27,8 @@ const (
 )
 
 // Filter container by labels: wsId and machineName.
-func findMachineContainer(identifier *model.MachineIdentifier) (*types.Container, error) {
-	containers, err := cli.ContainerList(context.Background(), types.ContainerListOptions{
+func findMachineContainer(execManager DockerMachineExecManager, identifier *model.MachineIdentifier) (*types.Container, error) {
+	containers, err := execManager.client.ContainerList(context.Background(), types.ContainerListOptions{
 		Filters: createMachineFilter(identifier),
 	})
 	if err != nil {

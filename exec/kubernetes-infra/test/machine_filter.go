@@ -20,7 +20,6 @@ import (
 	"os"
 	"path/filepath"
 
-
 	//"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -31,7 +30,6 @@ import (
 
 // kubectl get pod workspacemhm2rwl8c3lg4bk2.dockerimage-559c6b4bfd-zmjft -n=workspacemhm2rwl8c3lg4bk2
 // kubectl get pod workspacemhm2rwl8c3lg4bk2.dockerimage-559c6b4bfd-zmjft -n=workspacemhm2rwl8c3lg4bk2 -o=json
-
 
 const (
 	workspaceId = "workspacemhm2rwl8c3lg4bk2"
@@ -59,7 +57,7 @@ func main() {
 		panic(err.Error())
 	}
 
-	pods, err := clientset.CoreV1().Pods("").List(metav1.ListOptions{LabelSelector:"che.workspace_id=" + workspaceId})
+	pods, err := clientset.CoreV1().Pods("").List(metav1.ListOptions{LabelSelector: "che.workspace_id=" + workspaceId})
 	containers := pods.Items[0].Spec.Containers
 
 	var containerName string

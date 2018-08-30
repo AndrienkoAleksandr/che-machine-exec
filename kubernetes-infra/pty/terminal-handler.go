@@ -1,11 +1,11 @@
 package pty
 
 import (
+	"encoding/json"
 	"fmt"
 	"gopkg.in/igm/sockjs-go.v2/sockjs"
-	"k8s.io/client-go/tools/remotecommand"
-	"encoding/json"
 	"io"
+	"k8s.io/client-go/tools/remotecommand"
 )
 
 // PtyHandler is what remotecommand expects from a pty

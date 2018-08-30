@@ -1,7 +1,11 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"github.com/eclipse/che-machine-exec/exec"
+)
 
 func main() {
-	fmt.Println("test")
+	fmt.Println(exec.IsDockerInfra())
+	fmt.Println(exec.IsKubernetesInfra())
 }

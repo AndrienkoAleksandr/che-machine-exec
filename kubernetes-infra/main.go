@@ -17,30 +17,29 @@ package main
 import (
 	"fmt"
 	//metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/tools/remotecommand"
-	"gopkg.in/igm/sockjs-go.v2/sockjs"
-	"encoding/json"
-	"net/http"
-	"github.com/eclipse/che-machine-exec/kubernetes-infra/pty"
-	"k8s.io/api/core/v1"
-	"k8s.io/client-go/rest"
-	"k8s.io/client-go/kubernetes/scheme"
 	"encoding/hex"
-	"math/rand"
+	"encoding/json"
+	"github.com/eclipse/che-machine-exec/kubernetes-infra/pty"
 	"github.com/golang/glog"
+	"gopkg.in/igm/sockjs-go.v2/sockjs"
+	"k8s.io/api/core/v1"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/kubernetes/scheme"
+	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
+	"k8s.io/client-go/tools/remotecommand"
+	"math/rand"
+	"net/http"
 )
 
 var (
-	namespace = "default"
-	podName = "test-exec"
+	namespace     = "default"
+	podName       = "test-exec"
 	containerName = "exec"
-	cmd = []string{"/bin/sh"}
-	client *kubernetes.Clientset
-	config *rest.Config
+	cmd           = []string{"/bin/sh"}
+	client        *kubernetes.Clientset
+	config        *rest.Config
 )
-
 
 func CreateAttachHandler(path string) http.Handler {
 	return sockjs.NewHandler(path, sockjs.DefaultOptions, handleTerminalSession)
@@ -127,7 +126,7 @@ func genTerminalSessionId() (string, error) {
 // WaitForTerminal is called from apihandler.handleAttach as a goroutine
 // Waits for the SockJS connection to be opened by the client the session to be bound in handleTerminalSession
 func WaitForTerminal(k8sClient kubernetes.Interface, cfg *rest.Config, sessionId string) {
-	shell := "/bin/bash"// request.QueryParameter("shell")
+	shell := "/bin/bash" // request.QueryParameter("shell")
 
 	select {
 	case <-terminalSessions[sessionId].Bound:
@@ -217,8 +216,8 @@ func main() {
 	url := ":4000"
 
 	server := &http.Server{
-		Addr:      url,
-		Handler:   http.DefaultServeMux,
+		Addr:    url,
+		Handler: http.DefaultServeMux,
 		//TLSConfig: &tls.Config{Certificates: servingCerts},
 	}
 

@@ -13,9 +13,10 @@
 package jsonrpc
 
 import (
-	"fmt"
 	"github.com/eclipse/che-machine-exec/api/model"
-	execManager "github.com/eclipse/che-machine-exec/exec/docker-infra"
+
+	"fmt"
+	"github.com/eclipse/che-machine-exec/exec"
 	"github.com/eclipse/che/agents/go-agents/core/jsonrpc"
 	"strconv"
 )
@@ -34,6 +35,10 @@ type ResizeParam struct {
 	Cols uint `json:"cols"`
 	Rows uint `json:"rows"`
 }
+
+var (
+	execManager = exec.CreateExecManager()
+)
 
 func jsonRpcCreateExec(_ *jsonrpc.Tunnel, params interface{}, t jsonrpc.RespTransmitter) {
 	machineExec := params.(*model.MachineExec)
@@ -63,6 +68,7 @@ func jsonRpcResizeExec(_ *jsonrpc.Tunnel, params interface{}) (interface{}, erro
 	if err := execManager.Resize(resizeParam.Id, resizeParam.Cols, resizeParam.Rows); err != nil {
 		return nil, jsonrpc.NewArgsError(err)
 	}
+
 	fmt.Println("Resize with json RPC!")
 
 	return &OperationResult{
