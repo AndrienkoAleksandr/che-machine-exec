@@ -20,6 +20,9 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
+	"k8s.io/api/core/v1"
+	"k8s.io/client-go/tools/remotecommand"
+	"k8s.io/client-go/kubernetes/scheme"
 )
 
 type MachineExecs struct {
@@ -42,6 +45,12 @@ var (
 		execMap: make(map[int]*model.MachineExec),
 	}
 	prevExecID uint64 = 0
+)
+
+const (
+	Pods = "pods"
+	Exec = "exec"
+	Post = "POST"
 )
 
 /**
@@ -74,7 +83,29 @@ func createClient() *kubernetes.Clientset {
 	return clientset
 }
 
-func (KubernetesExecManager) Create(machineExec *model.MachineExec) (int, error) {
+func (manager KubernetesExecManager) Create(machineExec *model.MachineExec) (int, error) {
+	containerInfo, err := findMachineContainerInfo(manager, &machineExec.Identifier)
+
+	req := manager.client.CoreV1().RESTClient().Post().
+		Resource(Pods).
+		Name(containerInfo.podName).
+		Namespace(containerInfo.namespace).
+		SubResource(Exec).
+		// set up params
+        VersionedParams(&v1.PodExecOptions{
+		Container: containerInfo.name,
+		Command:   machineExec.Cmd,
+		Stdout:    true,
+		Stderr:    true,
+		Stdin:     true,
+		TTY:       true,
+	}, scheme.ParameterCodec)
+
+	_, err = remotecommand.NewSPDYExecutor(config, Post, req.URL())
+	if err != nil {
+		return -1, err
+	}
+
 	return 0, nil
 }
 

@@ -23,13 +23,22 @@ const (
 	MachineName = "CHE_MACHINE_NAME"
 )
 
+type KubernetesContainerInfo struct {
+	name string
+	podName string
+	namespace string
+}
+
 // Find container name by pod label: "wsId" and container environment variables "machineName".
-func findMachineContainer(execManager KubernetesExecManager, identifier *model.MachineIdentifier) (string, error) {
+func findMachineContainerInfo(execManager KubernetesExecManager, identifier *model.MachineIdentifier) (*KubernetesContainerInfo, error) {
+
 	pods, err := execManager.client.CoreV1().Pods("").List(metav1.ListOptions{LabelSelector: WsId + "=" + identifier.WsId})
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-	containers := pods.Items[0].Spec.Containers
+
+	pod := pods.Items[0]
+	containers := pod.Spec.Containers
 
 	var containerName string
 	for _, container := range containers {
@@ -42,5 +51,5 @@ func findMachineContainer(execManager KubernetesExecManager, identifier *model.M
 
 	fmt.Println("Found container with name " + containerName)
 
-	return containerName, nil
+	return &KubernetesContainerInfo{name: containerName, podName:pod.Name, namespace:pod.Namespace}, nil
 }
