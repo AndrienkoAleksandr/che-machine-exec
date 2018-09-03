@@ -4,7 +4,6 @@ import (
 	"net/http"
 	"github.com/eclipse/che/agents/go-agents/core/rest"
 	"strconv"
-	"fmt"
 	"log"
 	"github.com/eclipse/che-machine-exec/exec"
 	"errors"
@@ -24,7 +23,7 @@ func Attach(w http.ResponseWriter, r *http.Request, restParmas rest.Params) erro
 	if err != nil {
 		return errors.New("failed to parse id")
 	}
-	fmt.Println("Parsed id", id)
+	log.Println("Parsed id", id)
 
 	wsConn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
@@ -32,8 +31,7 @@ func Attach(w http.ResponseWriter, r *http.Request, restParmas rest.Params) erro
 		return err
 	}
 
-	_, err = exec.GetExecManager().Attach(id, wsConn)
-	if err != nil {
+	if err = exec.GetExecManager().Attach(id, wsConn); err != nil {
 		return err
 	}
 

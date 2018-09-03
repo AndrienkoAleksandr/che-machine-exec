@@ -105,14 +105,14 @@ func (manager DockerMachineExecManager) Check(id int) (int, error) {
 	return machineExec.ID, nil
 }
 
-func (manager DockerMachineExecManager) Attach(id int, conn *websocket.Conn) (*model.MachineExec, error) {
+func (manager DockerMachineExecManager) Attach(id int, conn *websocket.Conn) error {
 	machineExec := getById(id)
 	if machineExec == nil {
-		return nil, errors.New("Exec '" + strconv.Itoa(id) + "' to attach was not found")
+		return errors.New("Exec '" + strconv.Itoa(id) + "' to attach was not found")
 	}
 
 	if machineExec.Hjr != nil {
-		return machineExec, nil
+		return nil
 	}
 
 	hjr, err := manager.client.ContainerExecAttach(context.Background(), machineExec.ExecId, types.ExecConfig{
@@ -120,11 +120,11 @@ func (manager DockerMachineExecManager) Attach(id int, conn *websocket.Conn) (*m
 		Tty:    machineExec.Tty,
 	})
 	if err != nil {
-		return nil, errors.New("Failed to attach to exec " + err.Error())
+		return errors.New("Failed to attach to exec " + err.Error())
 	}
 	machineExec.Hjr = &hjr
 
-	return machineExec, nil
+	return nil
 }
 
 func (manager DockerMachineExecManager) Resize(id int, cols uint, rows uint) error {

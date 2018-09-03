@@ -138,10 +138,10 @@ func (KubernetesExecManager) Check(id int) (int, error) {
 }
 
 // todo made attach like void method...
-func (KubernetesExecManager) Attach(id int, conn *websocket.Conn) (*model.MachineExec, error) {
+func (KubernetesExecManager) Attach(id int, conn *websocket.Conn) error {
 	machineExec := getById(id)
 	if machineExec == nil {
-		return nil, errors.New("Exec '" + strconv.Itoa(id) + "' to attach was not found")
+		return errors.New("Exec '" + strconv.Itoa(id) + "' to attach was not found")
 	}
 
 	machineExec.AddWebSocket(conn)
@@ -161,10 +161,10 @@ func (KubernetesExecManager) Attach(id int, conn *websocket.Conn) (*model.Machin
 		Tty:    machineExec.Tty,
 	})
 	if err != nil {
-		return machineExec, err
+		return err
 	}
 
-	return machineExec, nil
+	return nil
 }
 
 func (KubernetesExecManager) Resize(id int, cols uint, rows uint) error {

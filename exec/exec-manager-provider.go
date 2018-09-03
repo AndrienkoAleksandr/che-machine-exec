@@ -23,7 +23,7 @@ type ExecManager interface {
 
 	Create(*model.MachineExec) (int, error)
 	Check(id int) (int, error)
-	Attach(id int, conn *websocket.Conn) (*model.MachineExec, error)
+	Attach(id int, conn *websocket.Conn) error
 	Resize(id int, cols uint, rows uint) error
 }
 
