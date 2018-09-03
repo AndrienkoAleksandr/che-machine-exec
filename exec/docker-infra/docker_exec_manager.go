@@ -24,6 +24,7 @@ import (
 	"strconv"
 	"sync"
 	"sync/atomic"
+	wsConnHandler "github.com/eclipse/che-machine-exec/exec/ws-conn"
 )
 
 //remove this after registry creation
@@ -115,6 +116,14 @@ func (manager DockerMachineExecManager) Attach(id int, conn *websocket.Conn) err
 		return nil
 	}
 
+	machineExec.AddWebSocket(conn)
+	go wsConnHandler.ReadWebSocketData(machineExec, conn)
+	go wsConnHandler.SendPingMessage(conn)
+
+	// restore output...
+	restoreContent := machineExec.Buffer.GetContent()
+	conn.WriteMessage(websocket.TextMessage, []byte(restoreContent))
+
 	hjr, err := manager.client.ContainerExecAttach(context.Background(), machineExec.ExecId, types.ExecConfig{
 		Detach: false,
 		Tty:    machineExec.Tty,
@@ -123,6 +132,8 @@ func (manager DockerMachineExecManager) Attach(id int, conn *websocket.Conn) err
 		return errors.New("Failed to attach to exec " + err.Error())
 	}
 	machineExec.Hjr = &hjr
+
+	machineExec.Start()
 
 	return nil
 }

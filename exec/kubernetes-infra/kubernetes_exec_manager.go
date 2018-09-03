@@ -137,7 +137,6 @@ func (KubernetesExecManager) Check(id int) (int, error) {
 	return machineExec.ID, nil
 }
 
-// todo made attach like void method...
 func (KubernetesExecManager) Attach(id int, conn *websocket.Conn) error {
 	machineExec := getById(id)
 	if machineExec == nil {

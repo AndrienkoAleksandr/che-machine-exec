@@ -1,12 +1,12 @@
 package exec
 
 import (
-	"fmt"
 	"github.com/eclipse/che-lib/websocket"
 	"github.com/eclipse/che-machine-exec/api/model"
 	"github.com/eclipse/che-machine-exec/exec/docker-infra"
 	"github.com/eclipse/che-machine-exec/exec/kubernetes-infra"
 	"os"
+	"log"
 )
 
 // infra enums
@@ -31,10 +31,10 @@ func CreateExecManager() ExecManager {
 	var manager ExecManager
 
 	if IsKubernetesInfra() {
-		fmt.Println("Use kubernetes implementation")
+		log.Println("Use kubernetes implementation")
 		manager = kubernetes_infra.New()
 	} else if IsDockerInfra() {
-		fmt.Println("Use docker implementation")
+		log.Println("Use docker implementation")
 		manager = docker_infra.New()
 	}
 
