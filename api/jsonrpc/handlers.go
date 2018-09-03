@@ -37,7 +37,7 @@ type ResizeParam struct {
 }
 
 var (
-	execManager = exec.CreateExecManager()
+	execManager = exec.GetExecManager()
 )
 
 func jsonRpcCreateExec(_ *jsonrpc.Tunnel, params interface{}, t jsonrpc.RespTransmitter) {
@@ -69,6 +69,7 @@ func jsonRpcResizeExec(_ *jsonrpc.Tunnel, params interface{}) (interface{}, erro
 		return nil, jsonrpc.NewArgsError(err)
 	}
 
+	// todo remove it...
 	fmt.Println("Resize with json RPC!")
 
 	return &OperationResult{

@@ -2,10 +2,11 @@ package exec
 
 import (
 	"fmt"
+	"github.com/eclipse/che-lib/websocket"
 	"github.com/eclipse/che-machine-exec/api/model"
+	"github.com/eclipse/che-machine-exec/exec/docker-infra"
 	"github.com/eclipse/che-machine-exec/exec/kubernetes-infra"
 	"os"
-	"github.com/eclipse/che-machine-exec/exec/docker-infra"
 )
 
 // infra enums
@@ -22,7 +23,7 @@ type ExecManager interface {
 
 	Create(*model.MachineExec) (int, error)
 	Check(id int) (int, error)
-	Attach(id int) (*model.MachineExec, error)
+	Attach(id int, conn *websocket.Conn) (*model.MachineExec, error)
 	Resize(id int, cols uint, rows uint) error
 }
 
@@ -37,15 +38,15 @@ func CreateExecManager() ExecManager {
 		manager = docker_infra.New()
 	}
 
-	execManager = manager
-
-	// todo cache exec manager
 	// todo what we should do in the case, when we have no implementation. Should we return stub, or only log error
 
 	return manager
 }
 
 func GetExecManager() ExecManager {
+	if execManager == nil {
+		execManager = CreateExecManager()
+	}
 	return execManager
 }
 

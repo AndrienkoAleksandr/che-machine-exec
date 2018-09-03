@@ -16,6 +16,7 @@ import (
 	"fmt"
 	"github.com/eclipse/che-machine-exec/api/model"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"errors"
 )
 
 const (
@@ -24,8 +25,8 @@ const (
 )
 
 type KubernetesContainerInfo struct {
-	name string
-	podName string
+	name      string
+	podName   string
 	namespace string
 }
 
@@ -35,6 +36,13 @@ func findMachineContainerInfo(execManager KubernetesExecManager, identifier *mod
 	pods, err := execManager.client.CoreV1().Pods("").List(metav1.ListOptions{LabelSelector: WsId + "=" + identifier.WsId})
 	if err != nil {
 		return nil, err
+	}
+
+	if len(pods.Items) > 1 {
+		return nil, errors.New("unexpected exception! Filter found more than one pods for workspace " + WsId)
+	}
+	if len(pods.Items) == 0 {
+		return nil, errors.New("pod was not found for workspace: " + WsId)
 	}
 
 	pod := pods.Items[0]
@@ -49,7 +57,11 @@ func findMachineContainerInfo(execManager KubernetesExecManager, identifier *mod
 		}
 	}
 
-	fmt.Println("Found container with name " + containerName)
+	if containerName == "" {
+		return nil, errors.New("machine with name " + identifier.MachineName + " was not found. For workspace " + WsId)
+	}
 
-	return &KubernetesContainerInfo{name: containerName, podName:pod.Name, namespace:pod.Namespace}, nil
+	fmt.Println("Found container with name '" + containerName + "' and workspace " + WsId)
+
+	return &KubernetesContainerInfo{name: containerName, podName: pod.Name, namespace: pod.Namespace}, nil
 }

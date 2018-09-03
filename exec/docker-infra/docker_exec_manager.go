@@ -26,6 +26,7 @@ import (
 	"sync/atomic"
 )
 
+//remove this after registry creation
 type DockerMachineExecManager struct {
 	client *client.Client
 	// todo apply registry
@@ -36,6 +37,7 @@ type MachineExecs struct {
 	execMap map[int]*model.MachineExec
 }
 
+// todo create exec registry to store list launched execs.
 var (
 	machineExecs = MachineExecs{
 		mutex:   &sync.Mutex{},
@@ -103,7 +105,7 @@ func (manager DockerMachineExecManager) Check(id int) (int, error) {
 	return machineExec.ID, nil
 }
 
-func (manager DockerMachineExecManager) Attach(id int) (*model.MachineExec, error) {
+func (manager DockerMachineExecManager) Attach(id int, conn *websocket.Conn) (*model.MachineExec, error) {
 	machineExec := getById(id)
 	if machineExec == nil {
 		return nil, errors.New("Exec '" + strconv.Itoa(id) + "' to attach was not found")

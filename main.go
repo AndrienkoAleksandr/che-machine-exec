@@ -15,12 +15,12 @@ package main
 import (
 	"flag"
 	jsonRpcApi "github.com/eclipse/che-machine-exec/api/jsonrpc"
-	"github.com/eclipse/che-machine-exec/api/websocket"
 	"github.com/eclipse/che/agents/go-agents/core/jsonrpc"
 	"github.com/eclipse/che/agents/go-agents/core/jsonrpc/jsonrpcws"
 	"github.com/eclipse/che/agents/go-agents/core/rest"
 	"net/http"
 	"time"
+	"github.com/eclipse/che-machine-exec/api/websocket"
 )
 
 var url string
@@ -39,7 +39,7 @@ func main() {
 				{
 					Method: "GET",
 					Path:   "/connect",
-					Name:   "MachineExec api end point(websocket)", // json-rpc
+					Name:   "MachineExec api end point(ws-conn)", // json-rpc
 					HandleFunc: func(w http.ResponseWriter, r *http.Request, _ rest.Params) error {
 						conn, err := jsonrpcws.Upgrade(w, r)
 						if err != nil {
@@ -54,7 +54,7 @@ func main() {
 				{
 					Method:     "GET",
 					Path:       "/attach/:id",
-					Name:       "Attach to exec(pure websocket)",
+					Name:       "Attach to exec(pure ws-conn)",
 					HandleFunc: websocket.Attach,
 				},
 			},
@@ -81,3 +81,4 @@ func main() {
 
 	server.ListenAndServe()
 }
+

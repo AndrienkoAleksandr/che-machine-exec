@@ -18,20 +18,23 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/eclipse/che-lib/websocket"
 	"github.com/eclipse/che-machine-exec/line-buffer"
+	"k8s.io/client-go/tools/remotecommand"
 	"log"
 	"sync"
 )
 
 const (
-	bufferSize = 8192
+	BufferSize = 8192
 )
 
-// todo remove workspace id
+// todo get workspace id from env
 type MachineIdentifier struct {
 	MachineName string `json:"machineName"`
 	WsId        string `json:"workspaceId"`
 }
 
+// todo machine exec can be the same for both: docker and kubernetes. Create separated
+// session object to store sessionId and connection specific stuff
 type MachineExec struct {
 	Identifier MachineIdentifier `json:"identifier"`
 	Cmd        []string          `json:"cmd"`
@@ -40,7 +43,8 @@ type MachineExec struct {
 	Rows       int               `json:"rows"`
 
 	// unique client id, real execId should be hidden from client to prevent serialization
-	ID     int `json:"id"`
+	ID int `json:"id"`
+	// todo this is docker specific. Think where is it should be
 	ExecId string
 	Hjr    *types.HijackedResponse
 	Buffer line_buffer.LineRingBuffer
@@ -50,6 +54,8 @@ type MachineExec struct {
 	MsgChan     chan []byte
 
 	Started bool
+	// todo this is kubernetes specific. Think where is it should be...
+	Executor remotecommand.Executor
 }
 
 func (machineExec *MachineExec) AddWebSocket(wsConn *websocket.Conn) {
@@ -100,7 +106,7 @@ func sendClientInputToExec(machineExec *MachineExec) {
 
 func sendExecOutputToWebsockets(machineExec *MachineExec) {
 	hjReader := machineExec.Hjr.Reader
-	buf := make([]byte, bufferSize)
+	buf := make([]byte, BufferSize)
 	var buffer bytes.Buffer
 
 	for {
@@ -123,17 +129,24 @@ func sendExecOutputToWebsockets(machineExec *MachineExec) {
 
 			fmt.Println("Amount connections ", len(wsConns))
 
-			for _, wsConn := range wsConns {
-				if err := wsConn.WriteMessage(websocket.TextMessage, buffer.Bytes()); err != nil {
-					fmt.Println("failed to write to websocket message!!!" + err.Error())
-					machineExec.RemoveWebSocket(wsConn)
-				}
-			}
+			writeDataToWsConnections(buffer.Bytes(), machineExec)
 		}
 
 		buffer.Reset()
 		if i < rbSize {
 			buffer.Write(buf[i:rbSize])
+		}
+	}
+}
+
+func writeDataToWsConnections(data []byte, machineExec *MachineExec)  {
+	defer machineExec.WsConnsLock.Unlock()
+	machineExec.WsConnsLock.Lock()
+
+	for _, wsConn := range machineExec.WsConns {
+		if err := wsConn.WriteMessage(websocket.TextMessage, data); err != nil {
+			fmt.Println("failed to write to ws-conn message!!!" + err.Error())
+			machineExec.RemoveWebSocket(wsConn)
 		}
 	}
 }
