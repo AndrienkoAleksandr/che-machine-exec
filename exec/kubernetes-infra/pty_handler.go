@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"github.com/eclipse/che-machine-exec/api/model"
 	"github.com/eclipse/che-lib/websocket"
+	"k8s.io/client-go/tools/remotecommand"
+	"log"
 )
 
 // Kubernetes pty handler
@@ -28,4 +30,13 @@ func (t PtyHandlerImpl) Write(p []byte) (int, error) {
 		}
 	}
 	return len(p), nil
+}
+
+func (t PtyHandlerImpl) Next() *remotecommand.TerminalSize {
+	log.Println("next size")
+	select {
+	case size := <-t.machineExec.SizeChan:
+		log.Println("So next size will be ", size)
+		return &size
+	}
 }

@@ -121,6 +121,7 @@ func (manager KubernetesExecManager) Create(machineExec *model.MachineExec) (int
 	machineExec.MsgChan = make(chan []byte)
 	machineExec.WsConnsLock = &sync.Mutex{}
 	machineExec.WsConns = make([]*websocket.Conn, 0)
+	machineExec.SizeChan = make(chan remotecommand.TerminalSize)
 
 	machineExecs.execMap[machineExec.ID] = machineExec
 
@@ -157,6 +158,7 @@ func (KubernetesExecManager) Attach(id int, conn *websocket.Conn) error {
 		Stdin:  ptyHandler,
 		Stdout: ptyHandler,
 		Stderr: ptyHandler,
+		TerminalSizeQueue: ptyHandler,
 		Tty:    machineExec.Tty,
 	})
 	if err != nil {
@@ -167,6 +169,14 @@ func (KubernetesExecManager) Attach(id int, conn *websocket.Conn) error {
 }
 
 func (KubernetesExecManager) Resize(id int, cols uint, rows uint) error {
+	log.Println("Resize!!!")
+	machineExec := getById(id)
+	if machineExec == nil {
+		return errors.New("Exec to resize '" + strconv.Itoa(id) + "' was not found")
+	}
+
+	log.Println("take a look on the chan" , machineExec.SizeChan)
+	machineExec.SizeChan <- remotecommand.TerminalSize{Width:uint16(cols), Height:uint16(rows)}
 	return nil
 }
 
