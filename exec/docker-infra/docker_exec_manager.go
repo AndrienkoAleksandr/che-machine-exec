@@ -19,12 +19,12 @@ import (
 	"github.com/docker/docker/client"
 	"github.com/eclipse/che-lib/websocket"
 	"github.com/eclipse/che-machine-exec/api/model"
+	wsConnHandler "github.com/eclipse/che-machine-exec/exec/ws-conn"
 	"github.com/eclipse/che-machine-exec/line-buffer"
 	"golang.org/x/net/context"
 	"strconv"
 	"sync"
 	"sync/atomic"
-	wsConnHandler "github.com/eclipse/che-machine-exec/exec/ws-conn"
 )
 
 //remove this after registry creation
@@ -113,16 +113,15 @@ func (manager DockerMachineExecManager) Attach(id int, conn *websocket.Conn) err
 	}
 
 	if machineExec.Hjr != nil {
+		// restore output...
+		restoreContent := machineExec.Buffer.GetContent()
+		conn.WriteMessage(websocket.TextMessage, []byte(restoreContent))
 		return nil
 	}
 
 	machineExec.AddWebSocket(conn)
 	go wsConnHandler.ReadWebSocketData(machineExec, conn)
 	go wsConnHandler.SendPingMessage(conn)
-
-	// restore output...
-	restoreContent := machineExec.Buffer.GetContent()
-	conn.WriteMessage(websocket.TextMessage, []byte(restoreContent))
 
 	hjr, err := manager.client.ContainerExecAttach(context.Background(), machineExec.ExecId, types.ExecConfig{
 		Detach: false,

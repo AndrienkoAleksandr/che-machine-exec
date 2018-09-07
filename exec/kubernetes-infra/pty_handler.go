@@ -2,8 +2,8 @@ package kubernetes_infra
 
 import (
 	"fmt"
-	"github.com/eclipse/che-machine-exec/api/model"
 	"github.com/eclipse/che-lib/websocket"
+	"github.com/eclipse/che-machine-exec/api/model"
 	"k8s.io/client-go/tools/remotecommand"
 	"log"
 )

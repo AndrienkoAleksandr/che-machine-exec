@@ -1,9 +1,9 @@
 package ws_conn
 
 import (
-	"time"
 	"github.com/eclipse/che-lib/websocket"
 	"log"
+	"time"
 )
 
 const PingPeriod = 30 * time.Second
@@ -19,5 +19,3 @@ func SendPingMessage(wsConn *websocket.Conn) {
 		}
 	}
 }
-
-

@@ -2,8 +2,8 @@ package ws_conn
 
 import (
 	"fmt"
-	"github.com/eclipse/che-machine-exec/api/model"
 	"github.com/eclipse/che-lib/websocket"
+	"github.com/eclipse/che-machine-exec/api/model"
 	"log"
 )
 

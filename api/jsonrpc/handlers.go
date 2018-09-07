@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"github.com/eclipse/che-machine-exec/exec"
 	"github.com/eclipse/che/agents/go-agents/core/jsonrpc"
+	"log"
 	"strconv"
 )
 
@@ -45,6 +46,7 @@ func jsonRpcCreateExec(_ *jsonrpc.Tunnel, params interface{}, t jsonrpc.RespTran
 
 	id, err := execManager.Create(machineExec)
 	if err != nil {
+		log.Println("Unable to create machine exec. Cause: ", err.Error())
 		t.SendError(jsonrpc.NewArgsError(err))
 	}
 

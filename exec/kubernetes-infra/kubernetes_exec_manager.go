@@ -13,22 +13,20 @@
 package kubernetes_infra
 
 import (
-	"sync"
-	"log"
 	"errors"
 	"github.com/eclipse/che-lib/websocket"
 	"github.com/eclipse/che-machine-exec/api/model"
+	wsConnHandler "github.com/eclipse/che-machine-exec/exec/ws-conn"
 	"github.com/eclipse/che-machine-exec/line-buffer"
-	"github.com/golang/glog"
 	"k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
-	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/tools/remotecommand"
+	"log"
 	"strconv"
+	"sync"
 	"sync/atomic"
-	wsConnHandler "github.com/eclipse/che-machine-exec/exec/ws-conn"
 )
 
 //remove this after registry creation
@@ -70,15 +68,15 @@ func createClient() *kubernetes.Clientset {
 	var err error
 
 	//creates the in-cluster config
-	//config, err = rest.InClusterConfig()
-	//if err != nil {
-	//	panic(err.Error())
-	//}
-
-	config, err = clientcmd.BuildConfigFromFlags("", "/home/user/.kube/config")
+	config, err = rest.InClusterConfig()
 	if err != nil {
-		glog.Fatal(err)
+		panic(err.Error())
 	}
+
+	//config, err = clientcmd.BuildConfigFromFlags("", "/home/user/.kube/config")
+	//if err != nil {
+	//	glog.Fatal(err)
+	//}
 
 	// creates the clientset
 	clientset, err := kubernetes.NewForConfig(config)
@@ -90,8 +88,14 @@ func createClient() *kubernetes.Clientset {
 }
 
 func (manager KubernetesExecManager) Create(machineExec *model.MachineExec) (int, error) {
+	log.Println("Begin creation")
+	log.Println("Try to find container")
 	containerInfo, err := findMachineContainerInfo(manager, &machineExec.Identifier)
+	if err != nil {
+		return -1, err
+	}
 
+	log.Println("Generate request")
 	req := manager.client.CoreV1().RESTClient().Post().
 		Resource(Pods).
 		Name(containerInfo.podName).
@@ -107,11 +111,13 @@ func (manager KubernetesExecManager) Create(machineExec *model.MachineExec) (int
 			TTY:       machineExec.Tty,
 		}, scheme.ParameterCodec)
 
+	log.Println("Try to create new executor")
 	executor, err := remotecommand.NewSPDYExecutor(config, Post, req.URL())
 	if err != nil {
 		return -1, err
 	}
 
+	log.Println("Created executor")
 	defer machineExecs.mutex.Unlock()
 	machineExecs.mutex.Lock()
 
@@ -155,11 +161,11 @@ func (KubernetesExecManager) Attach(id int, conn *websocket.Conn) error {
 	ptyHandler := PtyHandlerImpl{machineExec: machineExec}
 
 	err := machineExec.Executor.Stream(remotecommand.StreamOptions{
-		Stdin:  ptyHandler,
-		Stdout: ptyHandler,
-		Stderr: ptyHandler,
+		Stdin:             ptyHandler,
+		Stdout:            ptyHandler,
+		Stderr:            ptyHandler,
 		TerminalSizeQueue: ptyHandler,
-		Tty:    machineExec.Tty,
+		Tty:               machineExec.Tty,
 	})
 	if err != nil {
 		return err
@@ -175,8 +181,8 @@ func (KubernetesExecManager) Resize(id int, cols uint, rows uint) error {
 		return errors.New("Exec to resize '" + strconv.Itoa(id) + "' was not found")
 	}
 
-	log.Println("take a look on the chan" , machineExec.SizeChan)
-	machineExec.SizeChan <- remotecommand.TerminalSize{Width:uint16(cols), Height:uint16(rows)}
+	log.Println("take a look on the chan", machineExec.SizeChan)
+	machineExec.SizeChan <- remotecommand.TerminalSize{Width: uint16(cols), Height: uint16(rows)}
 	return nil
 }
 

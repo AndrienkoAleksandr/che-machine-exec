@@ -56,7 +56,7 @@ type MachineExec struct {
 	Started bool
 	// todo this is kubernetes specific. Think where is it should be...
 	Executor remotecommand.Executor
-	SizeChan      chan remotecommand.TerminalSize
+	SizeChan chan remotecommand.TerminalSize
 }
 
 func (machineExec *MachineExec) AddWebSocket(wsConn *websocket.Conn) {
@@ -140,7 +140,7 @@ func sendExecOutputToWebsockets(machineExec *MachineExec) {
 	}
 }
 
-func writeDataToWsConnections(data []byte, machineExec *MachineExec)  {
+func writeDataToWsConnections(data []byte, machineExec *MachineExec) {
 	defer machineExec.WsConnsLock.Unlock()
 	machineExec.WsConnsLock.Lock()
 

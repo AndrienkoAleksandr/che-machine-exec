@@ -1,13 +1,13 @@
 package websocket
 
 import (
-	"net/http"
-	"github.com/eclipse/che/agents/go-agents/core/rest"
-	"strconv"
-	"log"
-	"github.com/eclipse/che-machine-exec/exec"
 	"errors"
 	"github.com/eclipse/che-lib/websocket"
+	"github.com/eclipse/che-machine-exec/exec"
+	"github.com/eclipse/che/agents/go-agents/core/rest"
+	"log"
+	"net/http"
+	"strconv"
 )
 
 var (
@@ -37,5 +37,3 @@ func Attach(w http.ResponseWriter, r *http.Request, restParmas rest.Params) erro
 
 	return nil
 }
-
-

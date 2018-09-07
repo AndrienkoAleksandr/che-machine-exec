@@ -15,12 +15,12 @@ package main
 import (
 	"flag"
 	jsonRpcApi "github.com/eclipse/che-machine-exec/api/jsonrpc"
+	"github.com/eclipse/che-machine-exec/api/websocket"
 	"github.com/eclipse/che/agents/go-agents/core/jsonrpc"
 	"github.com/eclipse/che/agents/go-agents/core/jsonrpc/jsonrpcws"
 	"github.com/eclipse/che/agents/go-agents/core/rest"
 	"net/http"
 	"time"
-	"github.com/eclipse/che-machine-exec/api/websocket"
 )
 
 var url string
@@ -81,4 +81,3 @@ func main() {
 
 	server.ListenAndServe()
 }
-

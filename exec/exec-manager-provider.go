@@ -5,8 +5,8 @@ import (
 	"github.com/eclipse/che-machine-exec/api/model"
 	"github.com/eclipse/che-machine-exec/exec/docker-infra"
 	"github.com/eclipse/che-machine-exec/exec/kubernetes-infra"
-	"os"
 	"log"
+	"os"
 )
 
 // infra enums
