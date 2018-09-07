@@ -47,7 +47,7 @@
       "recipe": {
         "type": "openshift",
         "content": "---\nkind: List\nitems:\n-\n  apiVersion: v1\n  kind: Pod\n  metadata:\n    name: ws\n  spec:\n    containers:\n      -\n        image: aandrienko/theia-for-machine-exec:0.3.8\n        name: theia\n      -\n        image: aandrienko/kubernetes-machine-exec:latest\n        name: machine-exec\n",
-        "contentType": "application/x-yaworkspacen4b1ik9bxz1gqnoeml"
+        "contentType": "application/x-yaml"
       }
     }
   },
