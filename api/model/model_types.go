@@ -53,7 +53,9 @@ type MachineExec struct {
 	WsConns     []*websocket.Conn
 	MsgChan     chan []byte
 
-	Started bool
+	Started  bool
+	Attached bool
+
 	// todo this is kubernetes specific. Think where is it should be...
 	Executor remotecommand.Executor
 	SizeChan chan remotecommand.TerminalSize
@@ -125,12 +127,12 @@ func sendExecOutputToWebsockets(machineExec *MachineExec) {
 		}
 
 		if rbSize > 0 {
-			machineExec.Buffer.Write(buffer.Bytes()) // save data to buffer to restore
-			wsConns := machineExec.getWSConns()
+			// save data to buffer to restore
+			//wsConns := machineExec.getWSConns()
+			//
+			//fmt.Println("Amount connections ", len(wsConns))
 
-			fmt.Println("Amount connections ", len(wsConns))
-
-			writeDataToWsConnections(buffer.Bytes(), machineExec)
+			machineExec.WriteDataToWsConnections(buffer.Bytes())
 		}
 
 		buffer.Reset()
@@ -140,10 +142,13 @@ func sendExecOutputToWebsockets(machineExec *MachineExec) {
 	}
 }
 
-func writeDataToWsConnections(data []byte, machineExec *MachineExec) {
+func (machineExec *MachineExec) WriteDataToWsConnections(data []byte) {
 	defer machineExec.WsConnsLock.Unlock()
 	machineExec.WsConnsLock.Lock()
 
+	// save data to restore
+	machineExec.Buffer.Write(data)
+	// send data to the all connected clients
 	for _, wsConn := range machineExec.WsConns {
 		if err := wsConn.WriteMessage(websocket.TextMessage, data); err != nil {
 			fmt.Println("failed to write to ws-conn message!!!" + err.Error())

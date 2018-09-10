@@ -16,14 +16,14 @@ import (
 	"errors"
 	"fmt"
 	"github.com/eclipse/che-machine-exec/api/model"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"io/ioutil"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"log"
 )
 
 const (
-	WsId        = "che.workspace_id"
-	MachineName = "CHE_MACHINE_NAME"
+	WsId          = "che.workspace_id"
+	MachineName   = "CHE_MACHINE_NAME"
 	NameSpaceFile = "/var/run/secrets/kubernetes.io/serviceaccount/namespace"
 )
 
@@ -42,6 +42,7 @@ func findMachineContainerInfo(execManager KubernetesExecManager, identifier *mod
 	}
 	namespace := string(nsBytes)
 	log.Println("Current namespace is " + namespace)
+	//namespace := ""
 
 	pods, err := execManager.client.CoreV1().Pods(namespace).List(metav1.ListOptions{LabelSelector: WsId + "=" + identifier.WsId})
 	if err != nil {

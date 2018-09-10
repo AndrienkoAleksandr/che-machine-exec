@@ -154,11 +154,16 @@ func (KubernetesExecManager) Attach(id int, conn *websocket.Conn) error {
 	go wsConnHandler.ReadWebSocketData(machineExec, conn)
 	go wsConnHandler.SendPingMessage(conn)
 
-	// restore output...
-	restoreContent := machineExec.Buffer.GetContent()
-	conn.WriteMessage(websocket.TextMessage, []byte(restoreContent))
+	if machineExec.Attached {
+		// restore previous output.
+		log.Println("Restore content")
+		restoreContent := machineExec.Buffer.GetContent()
+		conn.WriteMessage(websocket.TextMessage, []byte(restoreContent))
+		return nil
+	}
 
 	ptyHandler := PtyHandlerImpl{machineExec: machineExec}
+	machineExec.Attached = true
 
 	err := machineExec.Executor.Stream(remotecommand.StreamOptions{
 		Stdin:             ptyHandler,
@@ -170,6 +175,7 @@ func (KubernetesExecManager) Attach(id int, conn *websocket.Conn) error {
 	if err != nil {
 		return err
 	}
+	log.Println("Attached!!!")
 
 	return nil
 }

@@ -22,6 +22,7 @@ import (
 	wsConnHandler "github.com/eclipse/che-machine-exec/exec/ws-conn"
 	"github.com/eclipse/che-machine-exec/line-buffer"
 	"golang.org/x/net/context"
+	"log"
 	"strconv"
 	"sync"
 	"sync/atomic"
@@ -116,8 +117,9 @@ func (manager DockerMachineExecManager) Attach(id int, conn *websocket.Conn) err
 	go wsConnHandler.ReadWebSocketData(machineExec, conn)
 	go wsConnHandler.SendPingMessage(conn)
 
-	if machineExec.Hjr != nil {
-		// restore output...
+	if machineExec.Attached {
+		// restore previous output.
+		log.Println("Restore content")
 		restoreContent := machineExec.Buffer.GetContent()
 		conn.WriteMessage(websocket.TextMessage, []byte(restoreContent))
 		return nil
@@ -130,7 +132,9 @@ func (manager DockerMachineExecManager) Attach(id int, conn *websocket.Conn) err
 	if err != nil {
 		return errors.New("Failed to attach to exec " + err.Error())
 	}
+
 	machineExec.Hjr = &hjr
+	machineExec.Attached = true
 
 	machineExec.Start()
 
