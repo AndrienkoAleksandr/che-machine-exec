@@ -112,16 +112,16 @@ func (manager DockerMachineExecManager) Attach(id int, conn *websocket.Conn) err
 		return errors.New("Exec '" + strconv.Itoa(id) + "' to attach was not found")
 	}
 
+	machineExec.AddWebSocket(conn)
+	go wsConnHandler.ReadWebSocketData(machineExec, conn)
+	go wsConnHandler.SendPingMessage(conn)
+
 	if machineExec.Hjr != nil {
 		// restore output...
 		restoreContent := machineExec.Buffer.GetContent()
 		conn.WriteMessage(websocket.TextMessage, []byte(restoreContent))
 		return nil
 	}
-
-	machineExec.AddWebSocket(conn)
-	go wsConnHandler.ReadWebSocketData(machineExec, conn)
-	go wsConnHandler.SendPingMessage(conn)
 
 	hjr, err := manager.client.ContainerExecAttach(context.Background(), machineExec.ExecId, types.ExecConfig{
 		Detach: false,
