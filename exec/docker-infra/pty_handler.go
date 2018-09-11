@@ -9,6 +9,9 @@ import (
 )
 
 type DockerPtyHandler struct {
+	*model.InOutHandlerBase
+
+	// todo remove exec
 	exec *model.MachineExec
 
 	execId string
@@ -16,7 +19,12 @@ type DockerPtyHandler struct {
 }
 
 func NewPtyHandler(exec *model.MachineExec, execId string) *DockerPtyHandler {
-	return &DockerPtyHandler{ exec: exec, execId:execId}
+	// todo create message chan here!!!
+
+	msgChan := make(chan []byte)
+	inOutHandler := &model.InOutHandlerBase{MsgChan:msgChan}
+
+	return &DockerPtyHandler{ exec: exec, execId:execId, InOutHandlerBase:inOutHandler}
 }
 
 func (ptyH DockerPtyHandler) Stream() {
@@ -25,21 +33,24 @@ func (ptyH DockerPtyHandler) Stream() {
 	}
 
 	go ptyH.sendClientInputToExec()
-	go ptyH.sendExecOutputToWebsockets()
+	go ptyH.sendExecOutputToWebSockets()
+}
+
+func (ptyH DockerPtyHandler) execIsAttached() bool {
+	return false;
 }
 
 func (ptyH DockerPtyHandler) sendClientInputToExec() {
-	machineExec := ptyH.exec
 	for {
-		data := <-machineExec.MsgChan // todo move MsgChan to pty!!!!
+		data := <-ptyH.MsgChan
 		if _, err := ptyH.hjr.Conn.Write(data); err != nil {
-			fmt.Println("Failed to write data to exec with id ", machineExec.ID, " Cause: ", err.Error())
+			//log error!!! with machine id someHow...
 			return
 		}
 	}
 }
 
-func (ptyH DockerPtyHandler) sendExecOutputToWebsockets() {
+func (ptyH DockerPtyHandler) sendExecOutputToWebSockets() {
 	hjReader := ptyH.hjr.Reader
 	buf := make([]byte, model.BufferSize)
 	var buffer bytes.Buffer

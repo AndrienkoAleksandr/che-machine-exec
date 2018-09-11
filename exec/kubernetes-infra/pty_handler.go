@@ -9,10 +9,20 @@ import (
 
 // Kubernetes pty handler
 type KubernetesPtyHandler struct {
+	*model.InOutHandlerBase
+
 	exec *model.MachineExec
 	//hide it in the package scope!!!!
 	sizeChan chan remotecommand.TerminalSize
 	executor remotecommand.Executor
+}
+
+func (ptyH KubernetesPtyHandler) execIsAttached() bool {
+	panic("implement me")
+}
+
+func (ptyH KubernetesPtyHandler) Stream() {
+	panic("implement me")
 }
 
 func NewPtyHandler(exec *model.MachineExec, executor remotecommand.Executor) *KubernetesPtyHandler {
@@ -21,7 +31,7 @@ func NewPtyHandler(exec *model.MachineExec, executor remotecommand.Executor) *Ku
 }
 
 func (ptyH KubernetesPtyHandler) Read(p []byte) (int, error) {
-	data := <-ptyH.exec.MsgChan
+	data := <-ptyH.MsgChan
 
 	return copy(p, data), nil
 }

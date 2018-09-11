@@ -24,6 +24,6 @@ func ReadWebSocketData(machineExec *model.MachineExec, wsConn *websocket.Conn) {
 			continue
 		}
 
-		machineExec.MsgChan <- wsBytes
+		machineExec.PtyHandler.WriteInput(wsBytes)
 	}
 }

@@ -19,7 +19,7 @@ import (
 	"github.com/docker/docker/client"
 	"github.com/eclipse/che-lib/websocket"
 	"github.com/eclipse/che-machine-exec/api/model"
-	wsConnHandler "github.com/eclipse/che-machine-exec/exec/ws-conn"
+	wsConnHandler "github.com/eclipse/che-machine-exec/api/websocket/ws-conn"
 	"github.com/eclipse/che-machine-exec/line-buffer"
 	"golang.org/x/net/context"
 	"log"
@@ -85,13 +85,15 @@ func (manager DockerMachineExecManager) Create(exec *model.MachineExec) (int, er
 	defer execs.mutex.Unlock()
 	execs.mutex.Lock()
 
+	exec.PtyHandler = NewPtyHandler(exec, resp.ID)
+
 	exec.ID = int(atomic.AddUint64(&prevExecID, 1))
 	exec.Buffer = line_buffer.CreateNewLineRingBuffer()
-	exec.MsgChan = make(chan []byte)
+
 	exec.WsConnsLock = &sync.Mutex{}
 	exec.WsConns = make([]*websocket.Conn, 0)
 
-	exec.PtyHandler = NewPtyHandler(exec, resp.ID)
+
 
 	execs.execMap[exec.ID] = exec
 
@@ -126,6 +128,7 @@ func (manager DockerMachineExecManager) Attach(id int, conn *websocket.Conn) err
 		return nil
 	}
 
+	// todo bad casting
 	ptyHandler := exec.PtyHandler.(*DockerPtyHandler)
 
 	hjr, err := manager.client.ContainerExecAttach(context.Background(), ptyHandler.execId, types.ExecConfig{

@@ -16,7 +16,7 @@ import (
 	"errors"
 	"github.com/eclipse/che-lib/websocket"
 	"github.com/eclipse/che-machine-exec/api/model"
-	wsConnHandler "github.com/eclipse/che-machine-exec/exec/ws-conn"
+	wsConnHandler "github.com/eclipse/che-machine-exec/api/websocket/ws-conn"
 	"github.com/eclipse/che-machine-exec/line-buffer"
 	"k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes"
@@ -125,7 +125,6 @@ func (manager KubernetesExecManager) Create(exec *model.MachineExec) (int, error
 
 	exec.ID = int(atomic.AddUint64(&prevExecID, 1))
 	exec.Buffer = line_buffer.CreateNewLineRingBuffer()
-	exec.MsgChan = make(chan []byte)
 	exec.WsConnsLock = &sync.Mutex{}
 	exec.WsConns = make([]*websocket.Conn, 0)
 

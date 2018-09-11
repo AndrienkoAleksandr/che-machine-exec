@@ -32,6 +32,8 @@ type MachineIdentifier struct {
 // todo machine exec can be the same for both: docker and kubernetes. Create separated
 // session object to store sessionId and connection specific stuff
 type MachineExec struct {
+	// unique machine exec id
+	ID int `json:"id"`
 	Identifier MachineIdentifier `json:"identifier"`
 	Cmd        []string          `json:"cmd"`
 	Tty        bool              `json:"tty"`
@@ -40,27 +42,25 @@ type MachineExec struct {
 	// Initial rows size
 	Rows       int               `json:"rows"`
 
-	// unique client id, real execId should be hidden from client to prevent serialization
-	ID int `json:"id"`
-	// todo this is docker specific. Think where is it should be
-	//ExecId string
-	//Hjr    *types.HijackedResponse
+
 	Buffer line_buffer.LineRingBuffer // move to InOutHandler
 
 	//todo move it to the connectionHandler!!!
 	WsConnsLock *sync.Mutex
 	WsConns     []*websocket.Conn
-	MsgChan     chan []byte
+	// MsgChan     chan []byte
 
 	//Started  bool
 	Attached bool
 
-	PtyHandler interface{} // here should be InOutHandler!!!
+	PtyHandler InOutHandler // here should be InOutHandler!!!
 }
 
 type InOutHandler interface {
-	execIsAttached()
+	execIsAttached() bool
 	Stream()
+	WriteInput([]byte)
+
 	// Restore
 }
 
@@ -68,7 +68,12 @@ type InOutHandlerBase struct {
 	InOutHandler
 
 	MsgChan     chan []byte
-	Buffer line_buffer.LineRingBuffer
+	//Buffer line_buffer.LineRingBuffer
+}
+
+// todo change to write and 'io' interface!!!
+func (baseHandler InOutHandlerBase) WriteInput(bts []byte)  {
+	baseHandler.MsgChan <- bts
 }
 
 
@@ -97,62 +102,6 @@ func (machineExec *MachineExec) getWSConns() []*websocket.Conn {
 
 	return machineExec.WsConns
 }
-
-//func (machineExec *MachineExec) Start() {
-//	if machineExec.Hjr == nil {
-//		return
-//	}
-//
-//	go sendClientInputToExec(machineExec)
-//	go sendExecOutputToWebsockets(machineExec)
-//
-//	machineExec.Started = true
-//}
-//
-//func sendClientInputToExec(machineExec *MachineExec) {
-//	for {
-//		data := <-machineExec.MsgChan
-//		if _, err := machineExec.Hjr.Conn.Write(data); err != nil {
-//			fmt.Println("Failed to write data to exec with id ", machineExec.ID, " Cause: ", err.Error())
-//			return
-//		}
-//	}
-//}
-//
-//func sendExecOutputToWebsockets(machineExec *MachineExec) {
-//	hjReader := machineExec.Hjr.Reader
-//	buf := make([]byte, BufferSize)
-//	var buffer bytes.Buffer
-//
-//	for {
-//		rbSize, err := hjReader.Read(buf)
-//		if err != nil {
-//			//todo handle EOF error
-//			fmt.Println("failed to read exec stdOut/stdError stream!!! " + err.Error())
-//			return
-//		}
-//
-//		i, err := normalizeBuffer(&buffer, buf, rbSize)
-//		if err != nil {
-//			log.Printf("Couldn't normalize byte buffer to UTF-8 sequence, due to an error: %s", err.Error())
-//			return
-//		}
-//
-//		if rbSize > 0 {
-//			// save data to buffer to restore
-//			//wsConns := machineExec.getWSConns()
-//			//
-//			//fmt.Println("Amount connections ", len(wsConns))
-//
-//			machineExec.WriteDataToWsConnections(buffer.Bytes())
-//		}
-//
-//		buffer.Reset()
-//		if i < rbSize {
-//			buffer.Write(buf[i:rbSize])
-//		}
-//	}
-//}
 
 func (machineExec *MachineExec) WriteDataToWsConnections(data []byte) {
 	defer machineExec.WsConnsLock.Unlock()
