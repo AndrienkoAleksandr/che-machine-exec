@@ -32,10 +32,10 @@ func CreateExecManager() ExecManager {
 
 	if IsKubernetesInfra() {
 		log.Println("Use kubernetes implementation")
-		manager = kubernetes_infra.New()
+		manager = kubernetes_infra.NewKubernetesExecManager()
 	} else if IsDockerInfra() {
 		log.Println("Use docker implementation")
-		manager = docker_infra.New()
+		manager = docker_infra.NewDockerExecManager()
 	}
 
 	// todo what we should do in the case, when we have no implementation. Should we return stub, or only log error

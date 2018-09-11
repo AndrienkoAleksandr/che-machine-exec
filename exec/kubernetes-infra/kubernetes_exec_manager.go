@@ -62,7 +62,7 @@ const (
 /**
  * Create new instance of the kubernetes exec manager
  */
-func New() KubernetesExecManager {
+func NewKubernetesExecManager() KubernetesExecManager {
 	return KubernetesExecManager{client: createClient()}
 }
 
@@ -89,10 +89,10 @@ func createClient() *kubernetes.Clientset {
 	return clientset
 }
 
-func (manager KubernetesExecManager) Create(machineExec *model.MachineExec) (int, error) {
+func (manager KubernetesExecManager) Create(exec *model.MachineExec) (int, error) {
 	log.Println("Begin creation")
 	log.Println("Try to find container")
-	containerInfo, err := findMachineContainerInfo(manager, &machineExec.Identifier)
+	containerInfo, err := findMachineContainerInfo(manager, &exec.Identifier)
 	if err != nil {
 		return -1, err
 	}
@@ -106,11 +106,11 @@ func (manager KubernetesExecManager) Create(machineExec *model.MachineExec) (int
 		// set up params
 		VersionedParams(&v1.PodExecOptions{
 			Container: containerInfo.name,
-			Command:   machineExec.Cmd,
+			Command:   exec.Cmd,
 			Stdout:    true,
 			Stderr:    true,
 			Stdin:     true,
-			TTY:       machineExec.Tty,
+			TTY:       exec.Tty,
 		}, scheme.ParameterCodec)
 
 	log.Println("Try to create new executor")
@@ -123,19 +123,19 @@ func (manager KubernetesExecManager) Create(machineExec *model.MachineExec) (int
 	defer execs.mutex.Unlock()
 	execs.mutex.Lock()
 
-	machineExec.ID = int(atomic.AddUint64(&prevExecID, 1))
-	machineExec.Buffer = line_buffer.CreateNewLineRingBuffer()
-	machineExec.MsgChan = make(chan []byte)
-	machineExec.WsConnsLock = &sync.Mutex{}
-	machineExec.WsConns = make([]*websocket.Conn, 0)
+	exec.ID = int(atomic.AddUint64(&prevExecID, 1))
+	exec.Buffer = line_buffer.CreateNewLineRingBuffer()
+	exec.MsgChan = make(chan []byte)
+	exec.WsConnsLock = &sync.Mutex{}
+	exec.WsConns = make([]*websocket.Conn, 0)
 
-	machineExec.PtyHandler = NewPtyHandler(machineExec, executor)
+	exec.PtyHandler = NewPtyHandler(exec, executor)
 
-	execs.execMap[machineExec.ID] = machineExec
+	execs.execMap[exec.ID] = exec
 
-	log.Println("Create exec ", machineExec.ID, "execId", machineExec.ExecId)
+	log.Println("Create exec ", exec.ID, "execId", exec.ExecId)
 
-	return machineExec.ID, nil
+	return exec.ID, nil
 }
 
 func (KubernetesExecManager) Check(id int) (int, error) {

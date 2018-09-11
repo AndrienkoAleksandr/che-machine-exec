@@ -58,6 +58,12 @@ type MachineExec struct {
 	PtyHandler interface{}
 }
 
+//func NewExec(id int, ) *MachineExec  {
+//
+//}
+
+
+
 func (machineExec *MachineExec) AddWebSocket(wsConn *websocket.Conn) {
 	defer machineExec.WsConnsLock.Unlock()
 	machineExec.WsConnsLock.Lock()
