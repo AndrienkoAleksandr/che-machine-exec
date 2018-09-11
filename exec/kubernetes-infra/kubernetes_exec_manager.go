@@ -62,7 +62,7 @@ const (
 /**
  * Create new instance of the kubernetes exec manager
  */
-func NewKubernetesExecManager() KubernetesExecManager {
+func NewManager() KubernetesExecManager {
 	return KubernetesExecManager{client: createClient()}
 }
 

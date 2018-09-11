@@ -48,7 +48,7 @@ var (
 	prevExecID uint64 = 0
 )
 
-func NewDockerExecManager() DockerMachineExecManager {
+func NewManager() DockerMachineExecManager {
 	return DockerMachineExecManager{client: createClient()}
 }
 
