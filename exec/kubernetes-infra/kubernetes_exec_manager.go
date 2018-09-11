@@ -133,7 +133,7 @@ func (manager KubernetesExecManager) Create(exec *model.MachineExec) (int, error
 
 	execs.execMap[exec.ID] = exec
 
-	log.Println("Create exec ", exec.ID, "execId", exec.ExecId)
+	log.Println("Create exec ", exec.ID, "execId", exec.ID)
 
 	return exec.ID, nil
 }
@@ -164,10 +164,10 @@ func (KubernetesExecManager) Attach(id int, conn *websocket.Conn) error {
 		return nil
 	}
 
-	ptyHandler := exec.PtyHandler.(*KubernetesPtyHandlerImpl)
+	ptyHandler := exec.PtyHandler.(*KubernetesPtyHandler)
 	exec.Attached = true
 
-	err := ptyHandler.Executor.Stream(remotecommand.StreamOptions{
+	err := ptyHandler.executor.Stream(remotecommand.StreamOptions{
 		Stdin:             ptyHandler,
 		Stdout:            ptyHandler,
 		Stderr:            ptyHandler,
@@ -189,11 +189,11 @@ func (KubernetesExecManager) Resize(id int, cols uint, rows uint) error {
 		return errors.New("Exec to resize '" + strconv.Itoa(id) + "' was not found")
 	}
 
-	ptyHandler := exec.PtyHandler.(*KubernetesPtyHandlerImpl)
+	ptyHandler := exec.PtyHandler.(*KubernetesPtyHandler)
 
-	log.Println("take a look on the chan", ptyHandler.SizeChan)
+	log.Println("take a look on the chan", ptyHandler.sizeChan)
 
-	ptyHandler.SizeChan <- remotecommand.TerminalSize{Width: uint16(cols), Height: uint16(rows)}
+	ptyHandler.sizeChan <- remotecommand.TerminalSize{Width: uint16(cols), Height: uint16(rows)}
 	return nil
 }
 

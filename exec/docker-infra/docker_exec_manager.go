@@ -85,16 +85,17 @@ func (manager DockerMachineExecManager) Create(exec *model.MachineExec) (int, er
 	defer execs.mutex.Unlock()
 	execs.mutex.Lock()
 
-	exec.ExecId = resp.ID
 	exec.ID = int(atomic.AddUint64(&prevExecID, 1))
 	exec.Buffer = line_buffer.CreateNewLineRingBuffer()
 	exec.MsgChan = make(chan []byte)
 	exec.WsConnsLock = &sync.Mutex{}
 	exec.WsConns = make([]*websocket.Conn, 0)
 
+	exec.PtyHandler = NewPtyHandler(exec, resp.ID)
+
 	execs.execMap[exec.ID] = exec
 
-	fmt.Println("Create exec ", exec.ID, "execId", exec.ExecId)
+	fmt.Println("Create exec ", exec.ID, "execId", resp.ID)
 
 	return exec.ID, nil
 }
@@ -125,7 +126,9 @@ func (manager DockerMachineExecManager) Attach(id int, conn *websocket.Conn) err
 		return nil
 	}
 
-	hjr, err := manager.client.ContainerExecAttach(context.Background(), exec.ExecId, types.ExecConfig{
+	ptyHandler := exec.PtyHandler.(*DockerPtyHandler)
+
+	hjr, err := manager.client.ContainerExecAttach(context.Background(), ptyHandler.execId, types.ExecConfig{
 		Detach: false,
 		Tty:    exec.Tty,
 	})
@@ -133,10 +136,10 @@ func (manager DockerMachineExecManager) Attach(id int, conn *websocket.Conn) err
 		return errors.New("Failed to attach to exec " + err.Error())
 	}
 
-	exec.Hjr = &hjr
+	ptyHandler.hjr = &hjr
 	exec.Attached = true
 
-	exec.Start()
+	ptyHandler.Stream()
 
 	return nil
 }
@@ -147,8 +150,10 @@ func (manager DockerMachineExecManager) Resize(id int, cols uint, rows uint) err
 		return errors.New("Exec to resize '" + strconv.Itoa(id) + "' was not found")
 	}
 
+	ptyHandler := exec.PtyHandler.(*DockerPtyHandler)
+
 	resizeParam := types.ResizeOptions{Height: rows, Width: cols}
-	if err := manager.client.ContainerExecResize(context.Background(), exec.ExecId, resizeParam); err != nil {
+	if err := manager.client.ContainerExecResize(context.Background(), ptyHandler.execId, resizeParam); err != nil {
 		return err
 	}
 

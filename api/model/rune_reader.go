@@ -20,7 +20,7 @@ import (
 )
 
 // read byte array as Unicode code points (rune in go)
-func normalizeBuffer(normalizedBuf *bytes.Buffer, buf []byte, n int) (int, error) {
+func NormalizeBuffer(normalizedBuf *bytes.Buffer, buf []byte, n int) (int, error) {
 	bufferBytes := normalizedBuf.Bytes()
 	runeReader := bufio.NewReader(bytes.NewReader(append(bufferBytes[:], buf[:n]...)))
 	normalizedBuf.Reset()
