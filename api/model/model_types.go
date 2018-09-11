@@ -58,8 +58,9 @@ type MachineExec struct {
 
 type InOutHandler interface {
 	execIsAttached() bool
-	Stream()
+	//StreamOutput()
 	WriteInput([]byte)
+	//Resize(int cols, int rows)
 
 	// Restore
 }

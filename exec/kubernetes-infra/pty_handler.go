@@ -17,17 +17,21 @@ type KubernetesPtyHandler struct {
 	executor remotecommand.Executor
 }
 
+func NewPtyHandler(exec *model.MachineExec, executor remotecommand.Executor) *KubernetesPtyHandler {
+	sizeChan := make(chan remotecommand.TerminalSize)
+
+	msgChan := make(chan []byte)
+	inOutHandler := &model.InOutHandlerBase{MsgChan:msgChan}
+
+	return &KubernetesPtyHandler{exec: exec, sizeChan:sizeChan, executor:executor, InOutHandlerBase:inOutHandler}
+}
+
 func (ptyH KubernetesPtyHandler) execIsAttached() bool {
 	panic("implement me")
 }
 
 func (ptyH KubernetesPtyHandler) Stream() {
 	panic("implement me")
-}
-
-func NewPtyHandler(exec *model.MachineExec, executor remotecommand.Executor) *KubernetesPtyHandler {
-	sizeChan := make(chan remotecommand.TerminalSize)
-	return &KubernetesPtyHandler{exec: exec, sizeChan:sizeChan, executor:executor}
 }
 
 func (ptyH KubernetesPtyHandler) Read(p []byte) (int, error) {
