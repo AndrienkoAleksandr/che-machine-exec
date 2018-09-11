@@ -16,9 +16,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/eclipse/che-machine-exec/api/model"
-	"io/ioutil"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"log"
 )
 
 const (
@@ -36,13 +34,13 @@ type KubernetesContainerInfo struct {
 // Find container name by pod label: "wsId" and container environment variables "machineName".
 func findMachineContainerInfo(execManager KubernetesExecManager, identifier *model.MachineIdentifier) (*KubernetesContainerInfo, error) {
 
-	nsBytes, err := ioutil.ReadFile(NameSpaceFile)
-	if err != nil {
-		return nil, err
-	}
-	namespace := string(nsBytes)
-	log.Println("Current namespace is " + namespace)
-	//namespace := ""
+	//nsBytes, err := ioutil.ReadFile(NameSpaceFile)
+	//if err != nil {
+	//	return nil, err
+	//}
+	//namespace := string(nsBytes)
+	//log.Println("Current namespace is " + namespace)
+	namespace := ""
 
 	pods, err := execManager.client.CoreV1().Pods(namespace).List(metav1.ListOptions{LabelSelector: WsId + "=" + identifier.WsId})
 	if err != nil {

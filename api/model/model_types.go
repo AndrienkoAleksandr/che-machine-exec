@@ -18,7 +18,6 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/eclipse/che-lib/websocket"
 	"github.com/eclipse/che-machine-exec/line-buffer"
-	"k8s.io/client-go/tools/remotecommand"
 	"log"
 	"sync"
 )
@@ -56,9 +55,7 @@ type MachineExec struct {
 	Started  bool
 	Attached bool
 
-	// todo this is kubernetes specific. Think where is it should be...
-	Executor remotecommand.Executor
-	SizeChan chan remotecommand.TerminalSize
+	PtyHandler interface{}
 }
 
 func (machineExec *MachineExec) AddWebSocket(wsConn *websocket.Conn) {

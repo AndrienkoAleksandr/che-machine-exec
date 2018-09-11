@@ -27,6 +27,8 @@ import (
 	"strconv"
 	"sync"
 	"sync/atomic"
+	"k8s.io/client-go/tools/clientcmd"
+	"github.com/golang/glog"
 )
 
 //remove this after registry creation
@@ -44,7 +46,7 @@ type KubernetesExecManager struct {
 var (
 	config *rest.Config
 
-	machineExecs = MachineExecs{
+	execs = MachineExecs{
 		mutex:   &sync.Mutex{},
 		execMap: make(map[int]*model.MachineExec),
 	}
@@ -68,15 +70,15 @@ func createClient() *kubernetes.Clientset {
 	var err error
 
 	//creates the in-cluster config
-	config, err = rest.InClusterConfig()
-	if err != nil {
-		panic(err.Error())
-	}
-
-	//config, err = clientcmd.BuildConfigFromFlags("", "/home/user/.kube/config")
+	//config, err = rest.InClusterConfig()
 	//if err != nil {
-	//	glog.Fatal(err)
+	//	panic(err.Error())
 	//}
+
+	config, err = clientcmd.BuildConfigFromFlags("", "/home/user/.kube/config")
+	if err != nil {
+		glog.Fatal(err)
+	}
 
 	// creates the clientset
 	clientset, err := kubernetes.NewForConfig(config)
@@ -118,18 +120,18 @@ func (manager KubernetesExecManager) Create(machineExec *model.MachineExec) (int
 	}
 
 	log.Println("Created executor")
-	defer machineExecs.mutex.Unlock()
-	machineExecs.mutex.Lock()
+	defer execs.mutex.Unlock()
+	execs.mutex.Lock()
 
-	machineExec.Executor = executor
 	machineExec.ID = int(atomic.AddUint64(&prevExecID, 1))
 	machineExec.Buffer = line_buffer.CreateNewLineRingBuffer()
 	machineExec.MsgChan = make(chan []byte)
 	machineExec.WsConnsLock = &sync.Mutex{}
 	machineExec.WsConns = make([]*websocket.Conn, 0)
-	machineExec.SizeChan = make(chan remotecommand.TerminalSize)
 
-	machineExecs.execMap[machineExec.ID] = machineExec
+	machineExec.PtyHandler = NewPtyHandler(machineExec, executor)
+
+	execs.execMap[machineExec.ID] = machineExec
 
 	log.Println("Create exec ", machineExec.ID, "execId", machineExec.ExecId)
 
@@ -137,40 +139,40 @@ func (manager KubernetesExecManager) Create(machineExec *model.MachineExec) (int
 }
 
 func (KubernetesExecManager) Check(id int) (int, error) {
-	machineExec := getById(id)
-	if machineExec == nil {
+	exec := getById(id)
+	if exec == nil {
 		return -1, errors.New("Exec '" + strconv.Itoa(id) + "' was not found")
 	}
-	return machineExec.ID, nil
+	return exec.ID, nil
 }
 
 func (KubernetesExecManager) Attach(id int, conn *websocket.Conn) error {
-	machineExec := getById(id)
-	if machineExec == nil {
+	exec := getById(id)
+	if exec == nil {
 		return errors.New("Exec '" + strconv.Itoa(id) + "' to attach was not found")
 	}
 
-	machineExec.AddWebSocket(conn)
-	go wsConnHandler.ReadWebSocketData(machineExec, conn)
+	exec.AddWebSocket(conn)
+	go wsConnHandler.ReadWebSocketData(exec, conn)
 	go wsConnHandler.SendPingMessage(conn)
 
-	if machineExec.Attached {
+	if exec.Attached {
 		// restore previous output.
 		log.Println("Restore content")
-		restoreContent := machineExec.Buffer.GetContent()
+		restoreContent := exec.Buffer.GetContent()
 		conn.WriteMessage(websocket.TextMessage, []byte(restoreContent))
 		return nil
 	}
 
-	ptyHandler := PtyHandlerImpl{machineExec: machineExec}
-	machineExec.Attached = true
+	ptyHandler := exec.PtyHandler.(*KubernetesPtyHandlerImpl)
+	exec.Attached = true
 
-	err := machineExec.Executor.Stream(remotecommand.StreamOptions{
+	err := ptyHandler.Executor.Stream(remotecommand.StreamOptions{
 		Stdin:             ptyHandler,
 		Stdout:            ptyHandler,
 		Stderr:            ptyHandler,
 		TerminalSizeQueue: ptyHandler,
-		Tty:               machineExec.Tty,
+		Tty:               exec.Tty,
 	})
 	if err != nil {
 		return err
@@ -182,19 +184,22 @@ func (KubernetesExecManager) Attach(id int, conn *websocket.Conn) error {
 
 func (KubernetesExecManager) Resize(id int, cols uint, rows uint) error {
 	log.Println("Resize!!!")
-	machineExec := getById(id)
-	if machineExec == nil {
+	exec := getById(id)
+	if exec == nil {
 		return errors.New("Exec to resize '" + strconv.Itoa(id) + "' was not found")
 	}
 
-	log.Println("take a look on the chan", machineExec.SizeChan)
-	machineExec.SizeChan <- remotecommand.TerminalSize{Width: uint16(cols), Height: uint16(rows)}
+	ptyHandler := exec.PtyHandler.(*KubernetesPtyHandlerImpl)
+
+	log.Println("take a look on the chan", ptyHandler.SizeChan)
+
+	ptyHandler.SizeChan <- remotecommand.TerminalSize{Width: uint16(cols), Height: uint16(rows)}
 	return nil
 }
 
 func getById(id int) *model.MachineExec {
-	defer machineExecs.mutex.Unlock()
+	defer execs.mutex.Unlock()
 
-	machineExecs.mutex.Lock()
-	return machineExecs.execMap[id]
+	execs.mutex.Lock()
+	return execs.execMap[id]
 }
