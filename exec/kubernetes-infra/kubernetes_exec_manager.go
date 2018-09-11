@@ -16,7 +16,6 @@ import (
 	"errors"
 	"github.com/eclipse/che-lib/websocket"
 	"github.com/eclipse/che-machine-exec/api/model"
-	wsConnHandler "github.com/eclipse/che-machine-exec/api/websocket/ws-conn"
 	"github.com/eclipse/che-machine-exec/line-buffer"
 	"k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes"
@@ -125,8 +124,6 @@ func (manager KubernetesExecManager) Create(exec *model.MachineExec) (int, error
 
 	exec.ID = int(atomic.AddUint64(&prevExecID, 1))
 	exec.Buffer = line_buffer.CreateNewLineRingBuffer()
-	exec.WsConnsLock = &sync.Mutex{}
-	exec.WsConns = make([]*websocket.Conn, 0)
 
 	exec.PtyHandler = NewPtyHandler(exec, executor)
 
@@ -151,9 +148,7 @@ func (KubernetesExecManager) Attach(id int, conn *websocket.Conn) error {
 		return errors.New("Exec '" + strconv.Itoa(id) + "' to attach was not found")
 	}
 
-	exec.AddWebSocket(conn)
-	go wsConnHandler.ReadWebSocketData(exec, conn)
-	go wsConnHandler.SendPingMessage(conn)
+	ptyHandler := exec.PtyHandler.(*KubernetesPtyHandler)
 
 	if exec.Attached {
 		// restore previous output.
@@ -163,7 +158,7 @@ func (KubernetesExecManager) Attach(id int, conn *websocket.Conn) error {
 		return nil
 	}
 
-	ptyHandler := exec.PtyHandler.(*KubernetesPtyHandler)
+
 	exec.Attached = true
 
 	err := ptyHandler.executor.Stream(remotecommand.StreamOptions{

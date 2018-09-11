@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"bytes"
 	"log"
+	"github.com/eclipse/che-machine-exec/api/websocket/ws-conn"
 )
 
 type DockerPtyHandler struct {
@@ -19,12 +20,15 @@ type DockerPtyHandler struct {
 }
 
 func NewPtyHandler(exec *model.MachineExec, execId string) *DockerPtyHandler {
-	// todo create message chan here!!!
-
 	msgChan := make(chan []byte)
-	inOutHandler := &model.InOutHandlerBase{MsgChan:msgChan}
+	connsHandler := ws_conn.New()
+	inOutHandler := &model.InOutHandlerBase{MsgChan:msgChan, ConnsHandler: connsHandler}
 
-	return &DockerPtyHandler{ exec: exec, execId:execId, InOutHandlerBase:inOutHandler}
+	return &DockerPtyHandler{
+		exec: exec,
+		execId:execId,
+		InOutHandlerBase:inOutHandler,
+	}
 }
 
 func (ptyH DockerPtyHandler) Stream() {
@@ -70,7 +74,8 @@ func (ptyH DockerPtyHandler) sendExecOutputToWebSockets() {
 		}
 
 		if rbSize > 0 {
-			ptyH.exec.WriteDataToWsConnections(buffer.Bytes())
+			fmt.Println("send Data to the all connections!!!! " + string(buffer.Bytes()))
+			ptyH.ConnsHandler.WriteDataToWsConnections(buffer.Bytes())
 		}
 
 		buffer.Reset()

@@ -19,7 +19,6 @@ import (
 	"github.com/docker/docker/client"
 	"github.com/eclipse/che-lib/websocket"
 	"github.com/eclipse/che-machine-exec/api/model"
-	wsConnHandler "github.com/eclipse/che-machine-exec/api/websocket/ws-conn"
 	"github.com/eclipse/che-machine-exec/line-buffer"
 	"golang.org/x/net/context"
 	"log"
@@ -90,10 +89,6 @@ func (manager DockerMachineExecManager) Create(exec *model.MachineExec) (int, er
 	exec.ID = int(atomic.AddUint64(&prevExecID, 1))
 	exec.Buffer = line_buffer.CreateNewLineRingBuffer()
 
-	exec.WsConnsLock = &sync.Mutex{}
-	exec.WsConns = make([]*websocket.Conn, 0)
-
-
 
 	execs.execMap[exec.ID] = exec
 
@@ -116,9 +111,12 @@ func (manager DockerMachineExecManager) Attach(id int, conn *websocket.Conn) err
 		return errors.New("Exec '" + strconv.Itoa(id) + "' to attach was not found")
 	}
 
-	exec.AddWebSocket(conn)
-	go wsConnHandler.ReadWebSocketData(exec, conn)
-	go wsConnHandler.SendPingMessage(conn)
+	// todo bad casting
+	ptyHandler := exec.PtyHandler.(*DockerPtyHandler)
+
+	ptyHandler.ConnsHandler.AddConnection(conn)
+	go ptyHandler.ConnsHandler.ReadDataFromConnections(exec.PtyHandler, conn)
+	go ptyHandler.ConnsHandler.SendPingMessage(conn)
 
 	if exec.Attached {
 		// restore previous output.
@@ -127,9 +125,6 @@ func (manager DockerMachineExecManager) Attach(id int, conn *websocket.Conn) err
 		conn.WriteMessage(websocket.TextMessage, []byte(restoreContent))
 		return nil
 	}
-
-	// todo bad casting
-	ptyHandler := exec.PtyHandler.(*DockerPtyHandler)
 
 	hjr, err := manager.client.ContainerExecAttach(context.Background(), ptyHandler.execId, types.ExecConfig{
 		Detach: false,

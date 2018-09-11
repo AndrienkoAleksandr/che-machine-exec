@@ -13,10 +13,10 @@
 package model
 
 import (
-	"fmt"
-	"github.com/eclipse/che-lib/websocket"
 	"github.com/eclipse/che-machine-exec/line-buffer"
-	"sync"
+	"github.com/eclipse/che-machine-exec/api/websocket/ws-conn"
+	"io"
+	"fmt"
 )
 
 const (
@@ -45,76 +45,43 @@ type MachineExec struct {
 
 	Buffer line_buffer.LineRingBuffer // move to InOutHandler
 
-	//todo move it to the connectionHandler!!!
-	WsConnsLock *sync.Mutex
-	WsConns     []*websocket.Conn
-	// MsgChan     chan []byte
-
-	//Started  bool
+	// remove it!!! Implement and use isAttached
 	Attached bool
-
-	PtyHandler InOutHandler // here should be InOutHandler!!!
+	PtyHandler        InOutHandler // here should be InOutHandler!!!
 }
 
+//type ExecSessionStorage struct {
+//	MachineExec *MachineExec
+//	PtyHandler        InOutHandler
+//}
+
+// rename to StdInOutHandler
 type InOutHandler interface {
 	execIsAttached() bool
-	//StreamOutput()
-	WriteInput([]byte)
+	//StreamExecStdInOut()
+	io.Writer
+	//Write([]byte) (int, error) // io.Writer....
 	//Resize(int cols, int rows)
-
 	// Restore
 }
 
 type InOutHandlerBase struct {
 	InOutHandler
 
-	MsgChan     chan []byte
+	ConnsHandler *ws_conn.ConnectionHandler
+
+	MsgChan     chan []byte // rename outputChan
+	// InputChan create it and use for ws connnections!!!!
+
 	//Buffer line_buffer.LineRingBuffer
 }
 
 // todo change to write and 'io' interface!!!
-func (baseHandler InOutHandlerBase) WriteInput(bts []byte)  {
+func (baseHandler InOutHandlerBase) Write(bts []byte) (int, error)  {
+	fmt.Println("Write here....")
 	baseHandler.MsgChan <- bts
+	return len(bts), nil
 }
 
 
 
-func (machineExec *MachineExec) AddWebSocket(wsConn *websocket.Conn) {
-	defer machineExec.WsConnsLock.Unlock()
-	machineExec.WsConnsLock.Lock()
-
-	machineExec.WsConns = append(machineExec.WsConns, wsConn)
-}
-
-func (machineExec *MachineExec) RemoveWebSocket(wsConn *websocket.Conn) {
-	defer machineExec.WsConnsLock.Unlock()
-	machineExec.WsConnsLock.Lock()
-
-	for index, wsConnElem := range machineExec.WsConns {
-		if wsConnElem == wsConn {
-			machineExec.WsConns = append(machineExec.WsConns[:index], machineExec.WsConns[index+1:]...)
-		}
-	}
-}
-
-func (machineExec *MachineExec) getWSConns() []*websocket.Conn {
-	defer machineExec.WsConnsLock.Unlock()
-	machineExec.WsConnsLock.Lock()
-
-	return machineExec.WsConns
-}
-
-func (machineExec *MachineExec) WriteDataToWsConnections(data []byte) {
-	defer machineExec.WsConnsLock.Unlock()
-	machineExec.WsConnsLock.Lock()
-
-	// save data to restore
-	machineExec.Buffer.Write(data)
-	// send data to the all connected clients
-	for _, wsConn := range machineExec.WsConns {
-		if err := wsConn.WriteMessage(websocket.TextMessage, data); err != nil {
-			fmt.Println("failed to write to ws-conn message!!!" + err.Error())
-			machineExec.RemoveWebSocket(wsConn)
-		}
-	}
-}

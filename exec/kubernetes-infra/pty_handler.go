@@ -5,6 +5,7 @@ import (
 	"github.com/eclipse/che-machine-exec/api/model"
 	"k8s.io/client-go/tools/remotecommand"
 	"log"
+	"github.com/eclipse/che-machine-exec/api/websocket/ws-conn"
 )
 
 // Kubernetes pty handler
@@ -21,9 +22,14 @@ func NewPtyHandler(exec *model.MachineExec, executor remotecommand.Executor) *Ku
 	sizeChan := make(chan remotecommand.TerminalSize)
 
 	msgChan := make(chan []byte)
-	inOutHandler := &model.InOutHandlerBase{MsgChan:msgChan}
+	connsHandler := ws_conn.New()
+	inOutHandler := &model.InOutHandlerBase{MsgChan:msgChan, ConnsHandler: connsHandler}
 
-	return &KubernetesPtyHandler{exec: exec, sizeChan:sizeChan, executor:executor, InOutHandlerBase:inOutHandler}
+	return &KubernetesPtyHandler{
+		exec: exec, sizeChan:sizeChan,
+		executor:executor,
+		InOutHandlerBase:inOutHandler,
+	}
 }
 
 func (ptyH KubernetesPtyHandler) execIsAttached() bool {
@@ -43,7 +49,7 @@ func (ptyH KubernetesPtyHandler) Read(p []byte) (int, error) {
 func (ptyH KubernetesPtyHandler) Write(p []byte) (int, error) {
 	fmt.Println(" Output! " + string(p))
 
-	ptyH.exec.WriteDataToWsConnections(p)
+	ptyH.ConnsHandler.WriteDataToWsConnections(p)
 
 	return len(p), nil
 }
