@@ -31,13 +31,15 @@ func NewPtyHandler(exec *model.MachineExec, execId string) *DockerExecStreamHand
 	}
 }
 
-func (ptyH DockerExecStreamHandler) Stream() {
+func (ptyH DockerExecStreamHandler) Stream(tty bool) error {
 	if ptyH.hjr == nil {
-		return
+		return nil // todo create and return err!!!
 	}
 
 	go ptyH.sendClientInputToExec()
 	go ptyH.sendExecOutputToWebSockets()
+
+	return nil
 }
 
 func (ptyH DockerExecStreamHandler) execIsAttached() bool {

@@ -114,6 +114,7 @@ func (manager DockerMachineExecManager) Attach(id int, conn *websocket.Conn) err
 	// todo bad casting
 	ptyHandler := exec.PtyHandler.(*DockerExecStreamHandler)
 
+	// stream connections...
 	ptyHandler.ConnsHandler.AddConnection(conn)
 	go ptyHandler.ConnsHandler.ReadDataFromConnections(exec.PtyHandler, conn)
 	go ptyHandler.ConnsHandler.SendPingMessage(conn)
@@ -137,9 +138,8 @@ func (manager DockerMachineExecManager) Attach(id int, conn *websocket.Conn) err
 	ptyHandler.hjr = &hjr
 	exec.Attached = true
 
-	ptyHandler.Stream()
-
-	return nil
+	// stream exec ....
+	return ptyHandler.Stream(exec.Tty);
 }
 
 func (manager DockerMachineExecManager) Resize(id int, cols uint, rows uint) error {

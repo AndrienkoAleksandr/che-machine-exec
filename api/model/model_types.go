@@ -61,7 +61,7 @@ type InOutHandler interface {
 
 	temp.StreamWriter
 
-	//StreamExecStdInOut()
+	Stream(tty bool) error
 	//io.Writer
 	//Write([]byte) (int, error) // io.Writer....
 	//Resize(int cols, int rows)

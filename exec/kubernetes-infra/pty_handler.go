@@ -36,8 +36,15 @@ func (ptyH KubernetesExecStreamHandler) execIsAttached() bool {
 	panic("implement me")
 }
 
-func (ptyH KubernetesExecStreamHandler) Stream() {
-	panic("implement me")
+// rename ptyH
+func (ptyH KubernetesExecStreamHandler) Stream(tty bool) error {
+	return ptyH.executor.Stream(remotecommand.StreamOptions{
+		Stdin:             ptyH,
+		Stdout:            ptyH,
+		Stderr:            ptyH,
+		TerminalSizeQueue: ptyH,
+		Tty:               tty,
+	})
 }
 
 func (ptyH KubernetesExecStreamHandler) Read(p []byte) (int, error) {

@@ -166,19 +166,18 @@ func (KubernetesExecManager) Attach(id int, conn *websocket.Conn) error {
 
 	exec.Attached = true
 
-	err := ptyHandler.executor.Stream(remotecommand.StreamOptions{
-		Stdin:             ptyHandler,
-		Stdout:            ptyHandler,
-		Stderr:            ptyHandler,
-		TerminalSizeQueue: ptyHandler,
-		Tty:               exec.Tty,
-	})
-	if err != nil {
-		return err
-	}
-	log.Println("Attached!!!")
+	return ptyHandler.Stream(exec.Tty)
 
-	return nil
+	//err := ptyHandler.executor.Stream(remotecommand.StreamOptions{
+	//	Stdin:             ptyHandler,
+	//	Stdout:            ptyHandler,
+	//	Stderr:            ptyHandler,
+	//	TerminalSizeQueue: ptyHandler,
+	//	Tty:               exec.Tty,
+	//})
+	//if err != nil {
+	//	return err
+	//}
 }
 
 func (KubernetesExecManager) Resize(id int, cols uint, rows uint) error {
