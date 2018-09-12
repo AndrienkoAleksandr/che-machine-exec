@@ -148,7 +148,12 @@ func (KubernetesExecManager) Attach(id int, conn *websocket.Conn) error {
 		return errors.New("Exec '" + strconv.Itoa(id) + "' to attach was not found")
 	}
 
-	ptyHandler := exec.PtyHandler.(*KubernetesPtyHandler)
+	// todo bad casting
+	ptyHandler := exec.PtyHandler.(*KubernetesExecStreamHandler)
+
+	ptyHandler.ConnsHandler.AddConnection(conn)
+	go ptyHandler.ConnsHandler.ReadDataFromConnections(exec.PtyHandler, conn)
+	go ptyHandler.ConnsHandler.SendPingMessage(conn)
 
 	if exec.Attached {
 		// restore previous output.
@@ -183,7 +188,7 @@ func (KubernetesExecManager) Resize(id int, cols uint, rows uint) error {
 		return errors.New("Exec to resize '" + strconv.Itoa(id) + "' was not found")
 	}
 
-	ptyHandler := exec.PtyHandler.(*KubernetesPtyHandler)
+	ptyHandler := exec.PtyHandler.(*KubernetesExecStreamHandler)
 
 	log.Println("take a look on the chan", ptyHandler.sizeChan)
 

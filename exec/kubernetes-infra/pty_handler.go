@@ -9,7 +9,7 @@ import (
 )
 
 // Kubernetes pty handler
-type KubernetesPtyHandler struct {
+type KubernetesExecStreamHandler struct {
 	*model.InOutHandlerBase
 
 	exec *model.MachineExec
@@ -18,35 +18,35 @@ type KubernetesPtyHandler struct {
 	executor remotecommand.Executor
 }
 
-func NewPtyHandler(exec *model.MachineExec, executor remotecommand.Executor) *KubernetesPtyHandler {
+func NewPtyHandler(exec *model.MachineExec, executor remotecommand.Executor) *KubernetesExecStreamHandler {
 	sizeChan := make(chan remotecommand.TerminalSize)
 
 	msgChan := make(chan []byte)
 	connsHandler := ws_conn.New()
 	inOutHandler := &model.InOutHandlerBase{MsgChan:msgChan, ConnsHandler: connsHandler}
 
-	return &KubernetesPtyHandler{
+	return &KubernetesExecStreamHandler{
 		exec: exec, sizeChan:sizeChan,
 		executor:executor,
 		InOutHandlerBase:inOutHandler,
 	}
 }
 
-func (ptyH KubernetesPtyHandler) execIsAttached() bool {
+func (ptyH KubernetesExecStreamHandler) execIsAttached() bool {
 	panic("implement me")
 }
 
-func (ptyH KubernetesPtyHandler) Stream() {
+func (ptyH KubernetesExecStreamHandler) Stream() {
 	panic("implement me")
 }
 
-func (ptyH KubernetesPtyHandler) Read(p []byte) (int, error) {
+func (ptyH KubernetesExecStreamHandler) Read(p []byte) (int, error) {
 	data := <-ptyH.MsgChan
 
 	return copy(p, data), nil
 }
 
-func (ptyH KubernetesPtyHandler) Write(p []byte) (int, error) {
+func (ptyH KubernetesExecStreamHandler) Write(p []byte) (int, error) {
 	fmt.Println(" Output! " + string(p))
 
 	ptyH.ConnsHandler.WriteDataToWsConnections(p)
@@ -54,7 +54,7 @@ func (ptyH KubernetesPtyHandler) Write(p []byte) (int, error) {
 	return len(p), nil
 }
 
-func (ptyH KubernetesPtyHandler) Next() *remotecommand.TerminalSize {
+func (ptyH KubernetesExecStreamHandler) Next() *remotecommand.TerminalSize {
 	log.Println("next size")
 	select {
 	case size := <-ptyH.sizeChan:

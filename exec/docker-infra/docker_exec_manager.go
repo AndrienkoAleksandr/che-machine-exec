@@ -112,7 +112,7 @@ func (manager DockerMachineExecManager) Attach(id int, conn *websocket.Conn) err
 	}
 
 	// todo bad casting
-	ptyHandler := exec.PtyHandler.(*DockerPtyHandler)
+	ptyHandler := exec.PtyHandler.(*DockerExecStreamHandler)
 
 	ptyHandler.ConnsHandler.AddConnection(conn)
 	go ptyHandler.ConnsHandler.ReadDataFromConnections(exec.PtyHandler, conn)
@@ -148,7 +148,7 @@ func (manager DockerMachineExecManager) Resize(id int, cols uint, rows uint) err
 		return errors.New("Exec to resize '" + strconv.Itoa(id) + "' was not found")
 	}
 
-	ptyHandler := exec.PtyHandler.(*DockerPtyHandler)
+	ptyHandler := exec.PtyHandler.(*DockerExecStreamHandler)
 
 	resizeParam := types.ResizeOptions{Height: rows, Width: cols}
 	if err := manager.client.ContainerExecResize(context.Background(), ptyHandler.execId, resizeParam); err != nil {

@@ -9,7 +9,7 @@ import (
 	"github.com/eclipse/che-machine-exec/api/websocket/ws-conn"
 )
 
-type DockerPtyHandler struct {
+type DockerExecStreamHandler struct {
 	*model.InOutHandlerBase
 
 	// todo remove exec
@@ -19,19 +19,19 @@ type DockerPtyHandler struct {
 	hjr    *types.HijackedResponse
 }
 
-func NewPtyHandler(exec *model.MachineExec, execId string) *DockerPtyHandler {
+func NewPtyHandler(exec *model.MachineExec, execId string) *DockerExecStreamHandler {
 	msgChan := make(chan []byte)
 	connsHandler := ws_conn.New()
 	inOutHandler := &model.InOutHandlerBase{MsgChan:msgChan, ConnsHandler: connsHandler}
 
-	return &DockerPtyHandler{
+	return &DockerExecStreamHandler{
 		exec: exec,
 		execId:execId,
 		InOutHandlerBase:inOutHandler,
 	}
 }
 
-func (ptyH DockerPtyHandler) Stream() {
+func (ptyH DockerExecStreamHandler) Stream() {
 	if ptyH.hjr == nil {
 		return
 	}
@@ -40,11 +40,11 @@ func (ptyH DockerPtyHandler) Stream() {
 	go ptyH.sendExecOutputToWebSockets()
 }
 
-func (ptyH DockerPtyHandler) execIsAttached() bool {
+func (ptyH DockerExecStreamHandler) execIsAttached() bool {
 	return false;
 }
 
-func (ptyH DockerPtyHandler) sendClientInputToExec() {
+func (ptyH DockerExecStreamHandler) sendClientInputToExec() {
 	for {
 		data := <-ptyH.MsgChan
 		if _, err := ptyH.hjr.Conn.Write(data); err != nil {
@@ -54,7 +54,7 @@ func (ptyH DockerPtyHandler) sendClientInputToExec() {
 	}
 }
 
-func (ptyH DockerPtyHandler) sendExecOutputToWebSockets() {
+func (ptyH DockerExecStreamHandler) sendExecOutputToWebSockets() {
 	hjReader := ptyH.hjr.Reader
 	buf := make([]byte, model.BufferSize)
 	var buffer bytes.Buffer

@@ -15,8 +15,8 @@ package model
 import (
 	"github.com/eclipse/che-machine-exec/line-buffer"
 	"github.com/eclipse/che-machine-exec/api/websocket/ws-conn"
-	"io"
 	"fmt"
+	"github.com/eclipse/che-machine-exec/api/temp"
 )
 
 const (
@@ -58,8 +58,11 @@ type MachineExec struct {
 // rename to StdInOutHandler
 type InOutHandler interface {
 	execIsAttached() bool
+
+	temp.StreamWriter
+
 	//StreamExecStdInOut()
-	io.Writer
+	//io.Writer
 	//Write([]byte) (int, error) // io.Writer....
 	//Resize(int cols, int rows)
 	// Restore
@@ -67,6 +70,8 @@ type InOutHandler interface {
 
 type InOutHandlerBase struct {
 	InOutHandler
+
+
 
 	ConnsHandler *ws_conn.ConnectionHandler
 
@@ -77,11 +82,11 @@ type InOutHandlerBase struct {
 }
 
 // todo change to write and 'io' interface!!!
-func (baseHandler InOutHandlerBase) Write(bts []byte) (int, error)  {
+func (baseHandler InOutHandlerBase) WriteInput(bts []byte)   {
 	fmt.Println("Write here....")
 	baseHandler.MsgChan <- bts
-	return len(bts), nil
 }
+
 
 
 

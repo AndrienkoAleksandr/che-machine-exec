@@ -3,10 +3,10 @@ package ws_conn
 import (
 	"fmt"
 	"github.com/eclipse/che-lib/websocket"
-	"io"
 	"log"
 	"time"
 	"sync"
+	"github.com/eclipse/che-machine-exec/api/temp"
 )
 
 const PingPeriod = 30 * time.Second
@@ -44,12 +44,13 @@ func (connHandler *ConnectionHandler) RemoveWebSocket(wsConn *websocket.Conn) {
 	}
 }
 
-func (connHandler *ConnectionHandler) getWSConns() []*websocket.Conn {
-	defer connHandler.WsConnsLock.Unlock()
-	connHandler.WsConnsLock.Lock()
-
-	return connHandler.WsConns
-}
+// can be usefull for testing purpose...
+//func (connHandler *ConnectionHandler) getWSConns() []*websocket.Conn {
+//	defer connHandler.WsConnsLock.Unlock()
+//	connHandler.WsConnsLock.Lock()
+//
+//	return connHandler.WsConns
+//}
 
 func (connHandler *ConnectionHandler) WriteDataToWsConnections(data []byte) {
 	defer connHandler.WsConnsLock.Unlock()
@@ -69,7 +70,7 @@ func (connHandler *ConnectionHandler) WriteDataToWsConnections(data []byte) {
 }
 
 //todo use here pty handler instead of io.writer?
-func (connHandler *ConnectionHandler) ReadDataFromConnections(machineExecWriter io.Writer, wsConn *websocket.Conn) {
+func (connHandler *ConnectionHandler) ReadDataFromConnections(machineExecWriter temp.StreamWriter, wsConn *websocket.Conn) {
 	defer connHandler.RemoveWebSocket(wsConn)
 
 	for {
@@ -86,7 +87,7 @@ func (connHandler *ConnectionHandler) ReadDataFromConnections(machineExecWriter 
 			continue
 		}
 
-		machineExecWriter.Write(wsBytes) // todo check error...?
+		machineExecWriter.WriteInput(wsBytes)
 	}
 }
 
