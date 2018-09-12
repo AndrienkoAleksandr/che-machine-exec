@@ -123,9 +123,8 @@ func (manager KubernetesExecManager) Create(exec *model.MachineExec) (int, error
 	execs.mutex.Lock()
 
 	exec.ID = int(atomic.AddUint64(&prevExecID, 1))
-	exec.Buffer = line_buffer.CreateNewLineRingBuffer()
 
-	exec.PtyHandler = NewPtyHandler(exec, executor)
+	exec.PtyHandler = NewPtyHandler(executor)
 
 	execs.execMap[exec.ID] = exec
 
@@ -155,29 +154,16 @@ func (KubernetesExecManager) Attach(id int, conn *websocket.Conn) error {
 	go ptyHandler.ConnsHandler.ReadDataFromConnections(exec.PtyHandler, conn)
 	go ptyHandler.ConnsHandler.SendPingMessage(conn)
 
-	if exec.Attached {
+	if ptyHandler.Buffer != nil {
 		// restore previous output.
 		log.Println("Restore content")
-		restoreContent := exec.Buffer.GetContent()
-		conn.WriteMessage(websocket.TextMessage, []byte(restoreContent))
-		return nil
+		restoreContent := ptyHandler.Buffer.GetContent()
+		return conn.WriteMessage(websocket.TextMessage, []byte(restoreContent))// todo check if content is not empty!!!
 	}
 
-
-	exec.Attached = true
+	ptyHandler.Buffer = line_buffer.CreateNewLineRingBuffer()
 
 	return ptyHandler.Stream(exec.Tty)
-
-	//err := ptyHandler.executor.Stream(remotecommand.StreamOptions{
-	//	Stdin:             ptyHandler,
-	//	Stdout:            ptyHandler,
-	//	Stderr:            ptyHandler,
-	//	TerminalSizeQueue: ptyHandler,
-	//	Tty:               exec.Tty,
-	//})
-	//if err != nil {
-	//	return err
-	//}
 }
 
 func (KubernetesExecManager) Resize(id int, cols uint, rows uint) error {

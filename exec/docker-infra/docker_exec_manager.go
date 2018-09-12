@@ -84,11 +84,9 @@ func (manager DockerMachineExecManager) Create(exec *model.MachineExec) (int, er
 	defer execs.mutex.Unlock()
 	execs.mutex.Lock()
 
-	exec.PtyHandler = NewPtyHandler(exec, resp.ID)
+	exec.PtyHandler = NewPtyHandler(resp.ID)
 
 	exec.ID = int(atomic.AddUint64(&prevExecID, 1))
-	exec.Buffer = line_buffer.CreateNewLineRingBuffer()
-
 
 	execs.execMap[exec.ID] = exec
 
@@ -119,12 +117,11 @@ func (manager DockerMachineExecManager) Attach(id int, conn *websocket.Conn) err
 	go ptyHandler.ConnsHandler.ReadDataFromConnections(exec.PtyHandler, conn)
 	go ptyHandler.ConnsHandler.SendPingMessage(conn)
 
-	if exec.Attached {
+	if ptyHandler.Buffer != nil { // ptyHandler != nil ?
 		// restore previous output.
 		log.Println("Restore content")
-		restoreContent := exec.Buffer.GetContent()
-		conn.WriteMessage(websocket.TextMessage, []byte(restoreContent))
-		return nil
+		restoreContent := ptyHandler.Buffer.GetContent()
+		return conn.WriteMessage(websocket.TextMessage, []byte(restoreContent))
 	}
 
 	hjr, err := manager.client.ContainerExecAttach(context.Background(), ptyHandler.execId, types.ExecConfig{
@@ -136,8 +133,8 @@ func (manager DockerMachineExecManager) Attach(id int, conn *websocket.Conn) err
 	}
 
 	ptyHandler.hjr = &hjr
-	exec.Attached = true
 
+	ptyHandler.Buffer = line_buffer.CreateNewLineRingBuffer()
 	// stream exec ....
 	return ptyHandler.Stream(exec.Tty);
 }

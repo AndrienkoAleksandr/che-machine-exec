@@ -70,7 +70,7 @@ func (connHandler *ConnectionHandler) WriteDataToWsConnections(data []byte) {
 }
 
 //todo use here pty handler instead of io.writer?
-func (connHandler *ConnectionHandler) ReadDataFromConnections(machineExecWriter temp.StreamWriter, wsConn *websocket.Conn) {
+func (connHandler *ConnectionHandler) ReadDataFromConnections(machineExecInputWriter temp.StreamWriter, wsConn *websocket.Conn) {
 	defer connHandler.RemoveWebSocket(wsConn)
 
 	for {
@@ -87,7 +87,7 @@ func (connHandler *ConnectionHandler) ReadDataFromConnections(machineExecWriter 
 			continue
 		}
 
-		machineExecWriter.WriteInput(wsBytes)
+		machineExecInputWriter.WriteInput(wsBytes)
 	}
 }
 

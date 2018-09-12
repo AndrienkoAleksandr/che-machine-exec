@@ -26,8 +26,8 @@ type LineRingBuffer struct {
 	lock *sync.Mutex
 }
 
-func CreateNewLineRingBuffer() LineRingBuffer {
-	return LineRingBuffer{ring.New(lineBufferSize), &sync.Mutex{}}
+func CreateNewLineRingBuffer() *LineRingBuffer {
+	return &LineRingBuffer{ring.New(lineBufferSize), &sync.Mutex{}}
 }
 
 func (lineBuff *LineRingBuffer) Write(bts []byte) {

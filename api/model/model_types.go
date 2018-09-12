@@ -13,10 +13,10 @@
 package model
 
 import (
-	"github.com/eclipse/che-machine-exec/line-buffer"
 	"github.com/eclipse/che-machine-exec/api/websocket/ws-conn"
 	"fmt"
 	"github.com/eclipse/che-machine-exec/api/temp"
+	"github.com/eclipse/che-machine-exec/line-buffer"
 )
 
 const (
@@ -42,26 +42,21 @@ type MachineExec struct {
 	// Initial rows size
 	Rows       int               `json:"rows"`
 
-
-	Buffer line_buffer.LineRingBuffer // move to InOutHandler
-
-	// remove it!!! Implement and use isAttached
-	Attached bool
 	PtyHandler        InOutHandler // here should be InOutHandler!!!
 }
 
-//type ExecSessionStorage struct {
+//type ExecSession struct {
 //	MachineExec *MachineExec
 //	PtyHandler        InOutHandler
 //}
 
 // rename to StdInOutHandler
 type InOutHandler interface {
-	execIsAttached() bool
+	//IsStreamed() bool
 
 	temp.StreamWriter
 
-	Stream(tty bool) error
+	Stream(tty bool) error // return write and reader
 	//io.Writer
 	//Write([]byte) (int, error) // io.Writer....
 	//Resize(int cols, int rows)
@@ -71,7 +66,7 @@ type InOutHandler interface {
 type InOutHandlerBase struct {
 	InOutHandler
 
-
+	Buffer *line_buffer.LineRingBuffer // move to InOutHandler
 
 	ConnsHandler *ws_conn.ConnectionHandler
 

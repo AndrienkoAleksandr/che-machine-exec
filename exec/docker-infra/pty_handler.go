@@ -12,52 +12,44 @@ import (
 type DockerExecStreamHandler struct {
 	*model.InOutHandlerBase
 
-	// todo remove exec
-	exec *model.MachineExec
-
 	execId string
 	hjr    *types.HijackedResponse
 }
 
-func NewPtyHandler(exec *model.MachineExec, execId string) *DockerExecStreamHandler {
+func NewPtyHandler(execId string) *DockerExecStreamHandler {
 	msgChan := make(chan []byte)
 	connsHandler := ws_conn.New()
 	inOutHandler := &model.InOutHandlerBase{MsgChan:msgChan, ConnsHandler: connsHandler}
 
 	return &DockerExecStreamHandler{
-		exec: exec,
 		execId:execId,
 		InOutHandlerBase:inOutHandler,
 	}
 }
 
-func (ptyH DockerExecStreamHandler) Stream(tty bool) error {
-	if ptyH.hjr == nil {
+func (strH DockerExecStreamHandler) Stream(tty bool) error {
+	if strH.hjr == nil {
 		return nil // todo create and return err!!!
 	}
 
-	go ptyH.sendClientInputToExec()
-	go ptyH.sendExecOutputToWebSockets()
+	go strH.sendClientInputToExec()
+	go strH.sendExecOutputToWebSockets()
 
 	return nil
 }
 
-func (ptyH DockerExecStreamHandler) execIsAttached() bool {
-	return false;
-}
-
-func (ptyH DockerExecStreamHandler) sendClientInputToExec() {
+func (strH DockerExecStreamHandler) sendClientInputToExec() {
 	for {
-		data := <-ptyH.MsgChan
-		if _, err := ptyH.hjr.Conn.Write(data); err != nil {
+		data := <-strH.MsgChan
+		if _, err := strH.hjr.Conn.Write(data); err != nil {
 			//log error!!! with machine id someHow...
 			return
 		}
 	}
 }
 
-func (ptyH DockerExecStreamHandler) sendExecOutputToWebSockets() {
-	hjReader := ptyH.hjr.Reader
+func (strH DockerExecStreamHandler) sendExecOutputToWebSockets() {
+	hjReader := strH.hjr.Reader
 	buf := make([]byte, model.BufferSize)
 	var buffer bytes.Buffer
 
@@ -77,7 +69,8 @@ func (ptyH DockerExecStreamHandler) sendExecOutputToWebSockets() {
 
 		if rbSize > 0 {
 			fmt.Println("send Data to the all connections!!!! " + string(buffer.Bytes()))
-			ptyH.ConnsHandler.WriteDataToWsConnections(buffer.Bytes())
+			strH.Buffer.Write(buffer.Bytes())
+			strH.ConnsHandler.WriteDataToWsConnections(buffer.Bytes())
 		}
 
 		buffer.Reset()
