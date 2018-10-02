@@ -73,6 +73,7 @@ func (manager DockerMachineExecManager) Create(machineExec *model.MachineExec) (
 		AttachStderr: true,
 		Detach:       false,
 		Cmd:          machineExec.Cmd,
+		Env:          mapEnvToArray(machineExec.Env),
 	})
 	if err != nil {
 		return -1, err
@@ -92,6 +93,17 @@ func (manager DockerMachineExecManager) Create(machineExec *model.MachineExec) (
 	fmt.Println("Create exec ", machineExec.ID, "execId", machineExec.ExecId)
 
 	return machineExec.ID, nil
+}
+
+func mapEnvToArray(env map[string]string) []string {
+	var result = make([]string, 0)
+
+	for envKey, envValue := range env {
+		envItem := envKey + "=" + envValue
+		result = append(result, envItem)
+	}
+
+	return result
 }
 
 func (manager DockerMachineExecManager) Check(id int) (int, error) {

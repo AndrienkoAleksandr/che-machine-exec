@@ -40,6 +40,7 @@ type MachineExec struct {
 	Tty        bool              `json:"tty"`
 	Cols       int               `json:"cols"`
 	Rows       int               `json:"rows"`
+	Env        map[string]string `json:"env"`
 
 	// unique client id, real execId should be hidden from client to prevent serialization
 	ID int `json:"id"`
