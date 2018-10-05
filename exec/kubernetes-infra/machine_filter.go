@@ -16,6 +16,7 @@ import (
 	"errors"
 	"github.com/eclipse/che-machine-exec/api/model"
 	"io/ioutil"
+	"k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -46,22 +47,15 @@ func findMachineContainerInfo(execManager KubernetesExecManager, identifier *mod
 		return nil, err
 	}
 
-	if len(pods.Items) > 1 {
-		return nil, errors.New("unexpected exception! Filter found more than one pods for workspace: " + identifier.WsId)
-	}
 	if len(pods.Items) == 0 {
 		return nil, errors.New("pod was not found for workspace: " + identifier.WsId)
 	}
 
-	pod := pods.Items[0]
-	containers := pod.Spec.Containers
-
 	var containerName string
-	for _, container := range containers {
-		for _, env := range container.Env {
-			if env.Name == MachineName && env.Value == identifier.MachineName {
-				containerName = container.Name
-			}
+	var pod v1.Pod
+	for _, pod = range pods.Items {
+		if containerName = findContainerName(pod, identifier.MachineName); containerName != "" {
+			continue
 		}
 	}
 
@@ -70,4 +64,18 @@ func findMachineContainerInfo(execManager KubernetesExecManager, identifier *mod
 	}
 
 	return &KubernetesContainerInfo{name: containerName, podName: pod.Name, namespace: pod.Namespace}, nil
+}
+
+func findContainerName(pod v1.Pod, machineName string) string {
+	containers := pod.Spec.Containers
+	var containerName string
+
+	for _, container := range containers {
+		for _, env := range container.Env {
+			if env.Name == MachineName && env.Value == machineName {
+				containerName = container.Name
+			}
+		}
+	}
+	return containerName;
 }
