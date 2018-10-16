@@ -8,7 +8,7 @@ CHE machine exec uses json-rpc protocol to communication with client.
 # How to use machine-exec image with Eclipse CHE workspace on the docker infrastructure:
 Apply docker.sock path (by default it's `/var/run/docker.sock`) to the workspace volume property `CHE_WORKSPACE_VOLUME` in the che.env file:
 Example:
- ```
+ ```bash
 CHE_WORKSPACE_VOLUME=/var/run/docker.sock:/var/run/docker.sock;
 ```
 che.env file located in the CHE `data` folder. che.env file contains configuration properties for Eclipse CHE. All changes of the file become avaliable after restart Eclipse CHE.
@@ -22,7 +22,7 @@ By command pallette you can create new multimachine terminal:
 
 Build docker image with che-machine-exec manually:
 
-```
+```bash
 docker build -t eclipse/che-machine-exec .
 ```
 
@@ -30,15 +30,21 @@ docker build -t eclipse/che-machine-exec .
 
 Run docker container with che-machine-exec manually:
 
-```
+```bash
 docker run --rm -p 4444:4444 -v /var/run/docker.sock:/var/run/docker.sock eclipse/che-machine-exec
 ```
 
-# Test che-machine-exec on the openshift
-To test che-machine-exec on the local running openshift you can use [ocp.sh sript](https://github.com/eclipse/che/blob/master/deploy/openshift/ocp.sh). Run it with arguments:
+# Test che-machine-exec on the openshift locally
+To test che-machine-exec you need deploy Eclipse CHE to the openshift locally. 
+First of all prepare CHE to deploy. # todo link
 
-```
-./ocp.sh --run-ocp --deploy-che --no-pull --debug --deploy-che-plugin-registry --multiuser --setup-ocp-oauth
+
+
+
+To deploy Eclipse CHE to the local running openshift you can use [ocp.sh sript](https://github.com/eclipse/che/blob/master/deploy/openshift/ocp.sh). Run it with arguments:
+
+```bash
+./ocp.sh --run-ocp --deploy-che --no-pull --debug --deploy-che-plugin-registry --multiuser
 ```
 In the output you will get link to the deployed Eclipse CHE project. Use it to login to Eclipse CHE. 
 > Notice: for ocp.sh you could use argument `--setup-ocp-oauth`, but in this case you should use "Openshift v3" auth on the login page.
@@ -46,13 +52,13 @@ In the output you will get link to the deployed Eclipse CHE project. Use it to l
 Register new user on the login page. After login you will be redirected to
 the Eclipse CHE user dashboard. 
 
-Create new workspace from openshift stack 'Java Theia on OpenShift' or one of the (Workspace Next) stacks. Run workspace. When workspace will be running you will see Theia IDE. 
+Create new workspace from openshift stack 'Java Theia on OpenShift' or (CHE 7 Preview) stack. Run workspace. When workspace will be running you will see Theia IDE. 
 
 Create new terminal with help main menu: `File` => `New multy-machine terminal`. After that IDE propse for you select machine to creation terminal. Select one of the machine by click. After that Theia should create new terminal on the bottom panel.
 
 Also you can create new Theia task for your project. In the project root create folder `.theia`. Create `tasks.json` file in the folder `.theia` with such content:
 
-```
+```bash
 {
     "tasks": [
         {
@@ -73,9 +79,11 @@ Install minishift with help this instractions:
  - https://docs.okd.io/latest/minishift/getting-started/setting-up-virtualization-environment.html
 
 
+# todo prepare CHE to deploy
+
 Install oc tool: [download oc binary for your platform](https://github.com/openshift/origin/releases), extract and apply this binary path to the system environment variables PATH. After that oc become availiable from terminal:
 
-```
+```bash
 $ oc version
 oc v3.9.0+191fece
 kubernetes v1.9.1+a0ce1bc657
@@ -83,7 +91,7 @@ features: Basic-Auth GSSAPI Kerberos SPNEGO
 ```
 
 Start Minishift:
-```
+```bash
 $ minishift start --memory=8GB
 -- Starting local OpenShift cluster using 'kvm' hypervisor...
 ...
@@ -102,7 +110,7 @@ $ minishift start --memory=8GB
 From this command output You need:
  - Minishift master url. In this case it's `https://192.168.42.159:8443`. Let's call it 'CHE_INFRA_KUBERNETES_MASTER__URL'. We can store this variable in the terminal session to use it for next commands:
 
- ```
+ ```bash
  export CHE_INFRA_KUBERNETES_MASTER__URL=https://192.168.42.162:8443
  ```
 > Note: in case if you delete minishift virtual machine(`minishift delete`) and create it again, this url will be changed.
@@ -111,7 +119,7 @@ Register new user on the CHE_INFRA_KUBERNETES_MASTER__URL page.
 
 Login to minishift with help oc, use new user login and password for it:
 
-```
+```bash
 $ oc login --server=${CHE_INFRA_KUBERNETES_MASTER__URL}
 ```
 This command activate openshift context to use minishift instance:
@@ -120,35 +128,77 @@ To deploy Eclipse CHE you can use [deploy.sh script](https://github.com/eclipse/
 
 Run ocp.sh script with arguments:
 
-```
+```bash
 export CHE_INFRA_KUBERNETES_MASTER__URL=${CHE_INFRA_KUBERNETES_MASTER__URL} && ./deploy_che.sh --no-pull --debug --multiuser
 ```
 
-// Todo
+// Todo test ui
 
 # Test on the Kubernetes (MiniKube)
 Install minikube virtual machine on you computer: https://kubernetes-cn.github.io/docs/tasks/tools/install-minikube
 
 You can install Eclipse CHE with help helm: https://github.com/eclipse/che/tree/master/deploy/kubernetes/helm/che#deploy-single-user-che-to-kubernetes-using-helm
 
-Install helm
+So, Install helm: #Todo
 
-So start new minikube:
+Start new minikube:
+```bash
+minikube start --cpus 2 --memory 8192 --extra-config=apiserver.authorization-mode=RBAC
 ```
-minikube start --cpus 2 --memory 4096 --extra-config=apiserver.authorization-mode=RBAC
+
+Go to helm/che directory:
+```bash
+$ cd ~/projects/che/deploy/kubernetes/helm/che
 ```
 
+- Add cluster-admin role for `kube-system:default` account
+```bash
+kubectl create clusterrolebinding add-on-cluster-admin --clusterrole=cluster-admin --serviceaccount=kube-system:default
+```
+- Set your default Kubernetes context:
+```bash
+kubectl config use-context minikube
+```
+- Install tiller on your cluster:
+  - Create a [tiller serviceAccount]: 
+    ```bash
+    kubectl create serviceaccount tiller --namespace kube-system
+    ```
+   - Bind it to the almighty cluster-admin role:
+      ```bash
+      kubectl apply -f ./tiller-rbac.yaml
+      ```
+  - Install tiller itself: 
+    ```bash
+    helm init --service-account tiller
+    ```
+- Start NGINX-based ingress controller:
+  ```bash
+  minikube addons enable ingress
+  ```
+
+There two configurations to deploy CHE on the Kubernetes:
+ - first one: for eache new workspace Eclipse CHE creates separated namespace. In this case che-machine-exec doesn't work from the box yet, because: https://github.com/eclipse/che/issues/11349:
+    ```bash
+      helm upgrade --install che --namespace che --set global.ingressDomain=<domain> ./
+    ```
+ - second one: Eclipse CHE creates workspace in the same namespace. In this case che-machine-exec should work from the box. Deploy Eclipse CHE with command:
+    ```bash
+    helm upgrade --install che --namespace=che --set global.cheWorkspacesNamespace=che ./
+    ```
+> Notice you can track deploy CHE with help Minikube dashboard:
+  ```bash
+  minikube dashboard
+  ```    
+
+When Eclipse CHE will be deployed on the Minikube you can test ui:
+for this stuff you should use kubernetes stack: 
+
+# Test che-machine exec with help UI on the openshift/kubernetes inside Eclipse CHE.
 
 
-
-# Test che-machine-exec on the openshift/kubernetes inside Eclipse CHE.
-
-
- 1206  che start
- 1207  che stop
  1208  helm delete che
  1209  helm delete eclipse-che
- 1210  helm lsit
  1211  helm list
  1212  helm delete che6.13
  1213  helm list
@@ -161,7 +211,6 @@ minikube start --cpus 2 --memory 4096 --extra-config=apiserver.authorization-mod
  1220  helm init --service-account tiller
  1221  helm upgrade --install che6.13 --namespace eclips-che ./
  1222  helm upgrade --install che6 --namespace eclips-che ./
- 1223  help list
  1224  helm list
  1225  kubectl get pods
  1226  kubectl get pod
@@ -198,11 +247,7 @@ minikube start --cpus 2 --memory 4096 --extra-config=apiserver.authorization-mod
  1257  kubectl get ingresses --all-namespaces
  1258  history
 
-
-
-
-helm upgrade --install che --namespace=che --set global.cheWorkspacesNamespace=che /path/to/che/helm/chart
-helm upgrade --install che --namespace eclipse-che ./
+helm upgrade --install che --namespace=che --set global.cheWorkspacesNamespace=che ./
 
 
 {
@@ -263,3 +308,20 @@ helm upgrade --install che --namespace eclipse-che ./
   "projects": [],
   "commands": []
 }
+
+
+# Prepare CHE to local deploy
+
+> Requiements: install java 8 or higher and maven 3.3.0 or higher
+
+First of all clone Eclipse che:
+
+```
+$ git clone https://github.com/eclipse/che.git ~/projects/che
+```
+For test purpose it's not nessure build all Eclipse CHE, assembly main is pretty enough:
+
+```
+$ cd assembly/assembly-main
+$ mvn clean install -DskipTests
+```
