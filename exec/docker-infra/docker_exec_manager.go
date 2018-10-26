@@ -18,34 +18,25 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
 	"github.com/eclipse/che-machine-exec/api/model"
+	"github.com/eclipse/che-machine-exec/exec/registry"
+	"github.com/eclipse/che-machine-exec/exec/server"
 	wsConnHandler "github.com/eclipse/che-machine-exec/exec/ws-conn"
 	"github.com/eclipse/che-machine-exec/line-buffer"
 	"github.com/gorilla/websocket"
 	"golang.org/x/net/context"
 	"strconv"
-	"sync"
-	"sync/atomic"
 )
 
 type DockerMachineExecManager struct {
 	client *client.Client
+	registry *registry.ExecRegistry
 }
-
-type MachineExecs struct {
-	mutex   *sync.Mutex
-	execMap map[int]*model.MachineExec
-}
-
-var (
-	machineExecs = MachineExecs{
-		mutex:   &sync.Mutex{},
-		execMap: make(map[int]*model.MachineExec),
-	}
-	prevExecID uint64 = 0
-)
 
 func New() DockerMachineExecManager {
-	return DockerMachineExecManager{client: createClient()}
+	return DockerMachineExecManager{
+		client: createClient(),
+		registry: registry.NewExecRegistry(),
+	}
 }
 
 func createClient() *client.Client {
@@ -78,24 +69,13 @@ func (manager DockerMachineExecManager) Create(machineExec *model.MachineExec) (
 		return -1, err
 	}
 
-	defer machineExecs.mutex.Unlock()
-	machineExecs.mutex.Lock()
+	exec := server.NewServerExec(machineExec, resp.ID, nil)
 
-	machineExec.ExecId = resp.ID
-	machineExec.ID = int(atomic.AddUint64(&prevExecID, 1))
-	machineExec.MsgChan = make(chan []byte)
-	machineExec.WsConnsLock = &sync.Mutex{}
-	machineExec.WsConns = make([]*websocket.Conn, 0)
-
-	machineExecs.execMap[machineExec.ID] = machineExec
-
-	fmt.Println("Create exec ", machineExec.ID, "execId", machineExec.ExecId)
-
-	return machineExec.ID, nil
+	return manager.registry.Add(exec), nil
 }
 
 func (manager DockerMachineExecManager) Check(id int) (int, error) {
-	machineExec := getById(id)
+	machineExec := manager.registry.GetById(id)
 	if machineExec == nil {
 		return -1, errors.New("Exec '" + strconv.Itoa(id) + "' was not found")
 	}
@@ -103,7 +83,7 @@ func (manager DockerMachineExecManager) Check(id int) (int, error) {
 }
 
 func (manager DockerMachineExecManager) Attach(id int, conn *websocket.Conn) error {
-	machineExec := getById(id)
+	machineExec := manager.registry.GetById(id)
 	if machineExec == nil {
 		return errors.New("Exec '" + strconv.Itoa(id) + "' to attach was not found")
 	}
@@ -135,7 +115,7 @@ func (manager DockerMachineExecManager) Attach(id int, conn *websocket.Conn) err
 }
 
 func (manager DockerMachineExecManager) Resize(id int, cols uint, rows uint) error {
-	machineExec := getById(id)
+	machineExec := manager.registry.GetById(id)
 	if machineExec == nil {
 		return errors.New("Exec to resize '" + strconv.Itoa(id) + "' was not found")
 	}
@@ -146,11 +126,4 @@ func (manager DockerMachineExecManager) Resize(id int, cols uint, rows uint) err
 	}
 
 	return nil
-}
-
-func getById(id int) *model.MachineExec {
-	defer machineExecs.mutex.Unlock()
-
-	machineExecs.mutex.Lock()
-	return machineExecs.execMap[id]
 }

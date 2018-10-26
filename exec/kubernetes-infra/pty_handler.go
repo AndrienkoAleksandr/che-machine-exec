@@ -13,31 +13,31 @@
 package kubernetes_infra
 
 import (
-	"github.com/eclipse/che-machine-exec/api/model"
+	"github.com/eclipse/che-machine-exec/exec/server"
 	"k8s.io/client-go/tools/remotecommand"
 )
 
 // Kubernetes pty handler
 type PtyHandlerImpl struct {
-	machineExec *model.MachineExec
+	serverExec *server.ServerExec
 }
 
 func (t PtyHandlerImpl) Read(p []byte) (int, error) {
-	data := <-t.machineExec.MsgChan
+	data := <-t.serverExec.MsgChan
 
 	return copy(p, data), nil
 }
 
 func (t PtyHandlerImpl) Write(p []byte) (int, error) {
 
-	t.machineExec.WriteDataToWsConnections(p)
+	t.serverExec.WriteDataToWsConnections(p)
 
 	return len(p), nil
 }
 
 func (t PtyHandlerImpl) Next() *remotecommand.TerminalSize {
 	select {
-	case size := <-t.machineExec.SizeChan:
+	case size := <-t.serverExec.SizeChan:
 		return &size
 	}
 }

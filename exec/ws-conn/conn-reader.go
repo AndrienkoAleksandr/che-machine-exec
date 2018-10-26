@@ -13,12 +13,12 @@
 package ws_conn
 
 import (
-	"github.com/eclipse/che-machine-exec/api/model"
+	"github.com/eclipse/che-machine-exec/exec/server"
 	"github.com/gorilla/websocket"
 	"log"
 )
 
-func ReadWebSocketData(machineExec *model.MachineExec, wsConn *websocket.Conn) {
+func ReadWebSocketData(machineExec *server.ServerExec, wsConn *websocket.Conn) {
 	defer machineExec.RemoveWebSocket(wsConn)
 
 	for {

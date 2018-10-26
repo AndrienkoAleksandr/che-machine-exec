@@ -15,6 +15,8 @@ package kubernetes_infra
 import (
 	"errors"
 	"github.com/eclipse/che-machine-exec/api/model"
+	"github.com/eclipse/che-machine-exec/exec/registry"
+	"github.com/eclipse/che-machine-exec/exec/server"
 	wsConnHandler "github.com/eclipse/che-machine-exec/exec/ws-conn"
 	"github.com/eclipse/che-machine-exec/line-buffer"
 	"github.com/gorilla/websocket"
@@ -25,28 +27,16 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/remotecommand"
 	"strconv"
-	"sync"
-	"sync/atomic"
 )
-
-type MachineExecs struct {
-	mutex   *sync.Mutex
-	execMap map[int]*model.MachineExec
-}
 
 type KubernetesExecManager struct {
 	core      corev1.CoreV1Interface
 	nameSpace string
+	registry *registry.ExecRegistry
 }
 
 var (
 	config *rest.Config
-
-	machineExecs = MachineExecs{
-		mutex:   &sync.Mutex{},
-		execMap: make(map[int]*model.MachineExec),
-	}
-	prevExecID uint64 = 0
 )
 
 const (
@@ -62,6 +52,7 @@ func New() KubernetesExecManager {
 	return KubernetesExecManager{
 		core:      createClient().CoreV1(),
 		nameSpace: GetNameSpace(),
+		registry: registry.NewExecRegistry(),
 	}
 }
 
@@ -109,31 +100,21 @@ func (manager KubernetesExecManager) Create(machineExec *model.MachineExec) (int
 		return -1, err
 	}
 
-	defer machineExecs.mutex.Unlock()
-	machineExecs.mutex.Lock()
+	exec := server.NewServerExec(machineExec, "", executor )
 
-	machineExec.Executor = executor
-	machineExec.ID = int(atomic.AddUint64(&prevExecID, 1))
-	machineExec.MsgChan = make(chan []byte)
-	machineExec.WsConnsLock = &sync.Mutex{}
-	machineExec.WsConns = make([]*websocket.Conn, 0)
-	machineExec.SizeChan = make(chan remotecommand.TerminalSize)
-
-	machineExecs.execMap[machineExec.ID] = machineExec
-
-	return machineExec.ID, nil
+	return manager.registry.Add(exec), nil
 }
 
-func (KubernetesExecManager) Check(id int) (int, error) {
-	machineExec := getById(id)
+func (manager KubernetesExecManager) Check(id int) (int, error) {
+	machineExec := manager.registry.GetById(id)
 	if machineExec == nil {
 		return -1, errors.New("Exec '" + strconv.Itoa(id) + "' was not found")
 	}
 	return machineExec.ID, nil
 }
 
-func (KubernetesExecManager) Attach(id int, conn *websocket.Conn) error {
-	machineExec := getById(id)
+func (manager KubernetesExecManager) Attach(id int, conn *websocket.Conn) error {
+	machineExec := manager.registry.GetById(id)
 	if machineExec == nil {
 		return errors.New("Exec '" + strconv.Itoa(id) + "' to attach was not found")
 	}
@@ -148,7 +129,7 @@ func (KubernetesExecManager) Attach(id int, conn *websocket.Conn) error {
 		return conn.WriteMessage(websocket.TextMessage, []byte(restoreContent))
 	}
 
-	ptyHandler := PtyHandlerImpl{machineExec: machineExec}
+	ptyHandler := PtyHandlerImpl{serverExec: machineExec}
 	machineExec.Buffer = line_buffer.New()
 
 	return machineExec.Executor.Stream(remotecommand.StreamOptions{
@@ -160,19 +141,13 @@ func (KubernetesExecManager) Attach(id int, conn *websocket.Conn) error {
 	})
 }
 
-func (KubernetesExecManager) Resize(id int, cols uint, rows uint) error {
-	machineExec := getById(id)
-	if machineExec == nil {
+func (manager KubernetesExecManager) Resize(id int, cols uint, rows uint) error {
+	exec := manager.registry.GetById(id)
+	if exec == nil {
 		return errors.New("Exec to resize '" + strconv.Itoa(id) + "' was not found")
 	}
 
-	machineExec.SizeChan <- remotecommand.TerminalSize{Width: uint16(cols), Height: uint16(rows)}
+	exec.SizeChan <- remotecommand.TerminalSize{Width: uint16(cols), Height: uint16(rows)}
 	return nil
 }
 
-func getById(id int) *model.MachineExec {
-	defer machineExecs.mutex.Unlock()
-
-	machineExecs.mutex.Lock()
-	return machineExecs.execMap[id]
-}

@@ -17,4 +17,5 @@ RUN CGO_ENABLED=0 GOOS=linux go build -a -ldflags '-w -s' -a -installsuffix cgo 
 
 FROM registry.centos.org/centos:7
 COPY --from=builder /go/src/github.com/eclipse/che-machine-exec/che-machine-exec /usr/local/bin
+RUN yum -y update && yum install -y nano
 ENTRYPOINT ["che-machine-exec"]

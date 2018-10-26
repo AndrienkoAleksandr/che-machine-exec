@@ -3,25 +3,40 @@ package registry
 import (
 	"github.com/eclipse/che-machine-exec/exec/server"
 	"sync"
+	"sync/atomic"
 )
 
 // Exec in memory storage
 type ExecRegistry struct {
 	mutex   *sync.Mutex
 	execMap map[int]*server.ServerExec
+	prevExecID uint64
+}
+
+func NewExecRegistry() *ExecRegistry {
+	return &ExecRegistry{
+		prevExecID:0,
+		mutex:   &sync.Mutex{},
+		execMap: make(map[int]*server.ServerExec),
+	}
 }
 
 // Add new exec to storage
-func (registry *ExecRegistry) Add(exec server.ServerExec)  {
+func (registry *ExecRegistry) Add(exec *server.ServerExec) int  {
 	defer registry.mutex.Unlock()
 
-	registry.execMap[exec.ID] = &exec
+	registry.mutex.Lock()
+	exec.ID = int(atomic.AddUint64(&registry.prevExecID, 1))
+	registry.execMap[exec.ID] = exec
+
+	return exec.ID
 }
 
 // Remove exec from storage
-func (registry *ExecRegistry) Remove(id int)  {
+func (registry *ExecRegistry) Remove(id int) {
 	defer registry.mutex.Unlock()
 
+	registry.mutex.Lock()
 	delete(registry.execMap, id)
 }
 
