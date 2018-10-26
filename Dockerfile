@@ -16,5 +16,8 @@ COPY . .
 RUN CGO_ENABLED=0 GOOS=linux go build -a -ldflags '-w -s' -a -installsuffix cgo -o che-machine-exec .
 
 FROM registry.centos.org/centos:7
+RUN yum -y update && yum -y install mc nano
 COPY --from=builder /go/src/github.com/eclipse/che-machine-exec/che-machine-exec /usr/local/bin
+RUN touch /usr/local/bin/restore && chmod 777 /usr/local/bin/restore
+RUN printf true >> /usr/local/bin/restore
 ENTRYPOINT ["che-machine-exec"]

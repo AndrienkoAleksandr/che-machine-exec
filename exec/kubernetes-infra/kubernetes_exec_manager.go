@@ -14,6 +14,7 @@ package kubernetes_infra
 
 import (
 	"errors"
+	"fmt"
 	"github.com/eclipse/che-machine-exec/api/model"
 	wsConnHandler "github.com/eclipse/che-machine-exec/exec/ws-conn"
 	"github.com/eclipse/che-machine-exec/line-buffer"
@@ -24,9 +25,11 @@ import (
 	corev1 "k8s.io/client-go/kubernetes/typed/core/v1"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/remotecommand"
+	"log"
 	"strconv"
 	"sync"
 	"sync/atomic"
+	"time"
 )
 
 type MachineExecs struct {
@@ -141,9 +144,18 @@ func (KubernetesExecManager) Attach(id int, conn *websocket.Conn) error {
 	machineExec.AddWebSocket(conn)
 	go wsConnHandler.ReadWebSocketData(machineExec, conn)
 	go wsConnHandler.SendPingMessage(conn)
+	go func() {
+		// add code to close this go-routing
+		ticker := time.NewTicker(30 * time.Second)
+		for t := range ticker.C {
+			fmt.Println("Tick tack at", t)
+			machineExec.MsgChan <- make([]byte, 0)
+		}
+	}()
 
 	if machineExec.Buffer != nil {
 		// restore previous output.
+		log.Println("restore previous output")
 		restoreContent := machineExec.Buffer.GetContent()
 		return conn.WriteMessage(websocket.TextMessage, []byte(restoreContent))
 	}

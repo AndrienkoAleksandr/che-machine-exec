@@ -14,6 +14,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	jsonRpcApi "github.com/eclipse/che-machine-exec/api/jsonrpc"
 	"github.com/eclipse/che-machine-exec/api/websocket"
 	"github.com/eclipse/che/agents/go-agents/core/jsonrpc"
@@ -31,6 +32,7 @@ func init() {
 
 func main() {
 	flag.Parse()
+	fmt.Println("test")
 
 	appRoutes := []rest.RoutesGroup{
 		{

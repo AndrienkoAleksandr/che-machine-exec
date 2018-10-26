@@ -13,6 +13,7 @@
 package kubernetes_infra
 
 import (
+	"fmt"
 	"github.com/eclipse/che-machine-exec/api/model"
 	"k8s.io/client-go/tools/remotecommand"
 )
@@ -25,10 +26,14 @@ type PtyHandlerImpl struct {
 func (t PtyHandlerImpl) Read(p []byte) (int, error) {
 	data := <-t.machineExec.MsgChan
 
+	fmt.Println(" Send data => " + string(data))
+
 	return copy(p, data), nil
 }
 
 func (t PtyHandlerImpl) Write(p []byte) (int, error) {
+
+	fmt.Println(" Write data to connections data => " + string(p))
 
 	t.machineExec.WriteDataToWsConnections(p)
 
@@ -38,6 +43,7 @@ func (t PtyHandlerImpl) Write(p []byte) (int, error) {
 func (t PtyHandlerImpl) Next() *remotecommand.TerminalSize {
 	select {
 	case size := <-t.machineExec.SizeChan:
+		fmt.Println(" Send new Size value => ", size)
 		return &size
 	}
 }
