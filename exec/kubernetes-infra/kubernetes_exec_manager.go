@@ -106,38 +106,38 @@ func (manager KubernetesExecManager) Create(machineExec *model.MachineExec) (int
 }
 
 func (manager KubernetesExecManager) Check(id int) (int, error) {
-	machineExec := manager.registry.GetById(id)
-	if machineExec == nil {
+	exec := manager.registry.GetById(id)
+	if exec == nil {
 		return -1, errors.New("Exec '" + strconv.Itoa(id) + "' was not found")
 	}
-	return machineExec.ID, nil
+	return exec.ID, nil
 }
 
 func (manager KubernetesExecManager) Attach(id int, conn *websocket.Conn) error {
-	machineExec := manager.registry.GetById(id)
-	if machineExec == nil {
+	exec := manager.registry.GetById(id)
+	if exec == nil {
 		return errors.New("Exec '" + strconv.Itoa(id) + "' to attach was not found")
 	}
 
-	machineExec.AddWebSocket(conn)
-	go wsConnHandler.ReadWebSocketData(machineExec, conn)
+	exec.AddWebSocket(conn)
+	go wsConnHandler.ReadWebSocketData(exec, conn)
 	go wsConnHandler.SendPingMessage(conn)
 
-	if machineExec.Buffer != nil {
+	if exec.Buffer != nil {
 		// restore previous output.
-		restoreContent := machineExec.Buffer.GetContent()
+		restoreContent := exec.Buffer.GetContent()
 		return conn.WriteMessage(websocket.TextMessage, []byte(restoreContent))
 	}
 
-	ptyHandler := PtyHandlerImpl{serverExec: machineExec}
-	machineExec.Buffer = line_buffer.New()
+	ptyHandler := PtyHandlerImpl{serverExec: exec}
+	exec.Buffer = line_buffer.New()
 
-	return machineExec.Executor.Stream(remotecommand.StreamOptions{
+	return exec.Executor.Stream(remotecommand.StreamOptions{
 		Stdin:             ptyHandler,
 		Stdout:            ptyHandler,
 		Stderr:            ptyHandler,
 		TerminalSizeQueue: ptyHandler,
-		Tty:               machineExec.Tty,
+		Tty:               exec.Tty,
 	})
 }
 

@@ -75,53 +75,53 @@ func (manager DockerMachineExecManager) Create(machineExec *model.MachineExec) (
 }
 
 func (manager DockerMachineExecManager) Check(id int) (int, error) {
-	machineExec := manager.registry.GetById(id)
-	if machineExec == nil {
+	exec := manager.registry.GetById(id)
+	if exec == nil {
 		return -1, errors.New("Exec '" + strconv.Itoa(id) + "' was not found")
 	}
-	return machineExec.ID, nil
+	return exec.ID, nil
 }
 
 func (manager DockerMachineExecManager) Attach(id int, conn *websocket.Conn) error {
-	machineExec := manager.registry.GetById(id)
-	if machineExec == nil {
+	exec := manager.registry.GetById(id)
+	if exec == nil {
 		return errors.New("Exec '" + strconv.Itoa(id) + "' to attach was not found")
 	}
 
-	machineExec.AddWebSocket(conn)
-	go wsConnHandler.ReadWebSocketData(machineExec, conn)
+	exec.AddWebSocket(conn)
+	go wsConnHandler.ReadWebSocketData(exec, conn)
 	go wsConnHandler.SendPingMessage(conn)
 
-	if machineExec.Buffer != nil {
+	if exec.Buffer != nil {
 		// restore previous output.
-		restoreContent := machineExec.Buffer.GetContent()
+		restoreContent := exec.Buffer.GetContent()
 		return conn.WriteMessage(websocket.TextMessage, []byte(restoreContent))
 	}
 
-	hjr, err := manager.client.ContainerExecAttach(context.Background(), machineExec.ExecId, types.ExecConfig{
+	hjr, err := manager.client.ContainerExecAttach(context.Background(), exec.ExecId, types.ExecConfig{
 		Detach: false,
-		Tty:    machineExec.Tty,
+		Tty:    exec.Tty,
 	})
 	if err != nil {
 		return errors.New("Failed to attach to exec " + err.Error())
 	}
 
-	machineExec.Hjr = &hjr
-	machineExec.Buffer = line_buffer.New()
+	exec.Hjr = &hjr
+	exec.Buffer = line_buffer.New()
 
-	machineExec.Start()
+	exec.Start()
 
 	return nil
 }
 
 func (manager DockerMachineExecManager) Resize(id int, cols uint, rows uint) error {
-	machineExec := manager.registry.GetById(id)
-	if machineExec == nil {
+	exec := manager.registry.GetById(id)
+	if exec == nil {
 		return errors.New("Exec to resize '" + strconv.Itoa(id) + "' was not found")
 	}
 
 	resizeParam := types.ResizeOptions{Height: rows, Width: cols}
-	if err := manager.client.ContainerExecResize(context.Background(), machineExec.ExecId, resizeParam); err != nil {
+	if err := manager.client.ContainerExecResize(context.Background(), exec.ExecId, resizeParam); err != nil {
 		return err
 	}
 

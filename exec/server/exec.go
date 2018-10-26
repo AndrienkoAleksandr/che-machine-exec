@@ -48,11 +48,11 @@ func NewServerExec(machineExec *model.MachineExec, execId string, executor remot
 	}
 }
 
-func (machineExec *ServerExec) AddWebSocket(wsConn *websocket.Conn) {
-	defer machineExec.WsConnsLock.Unlock()
-	machineExec.WsConnsLock.Lock()
+func (exec *ServerExec) AddWebSocket(wsConn *websocket.Conn) {
+	defer exec.WsConnsLock.Unlock()
+	exec.WsConnsLock.Lock()
 
-	machineExec.WsConns = append(machineExec.WsConns, wsConn)
+	exec.WsConns = append(exec.WsConns, wsConn)
 }
 
 func (exec *ServerExec) RemoveWebSocket(wsConn *websocket.Conn) {
@@ -73,27 +73,27 @@ func (exec *ServerExec) getWSConns() []*websocket.Conn {
 	return exec.WsConns
 }
 
-func (machineExec *ServerExec) Start() {
-	if machineExec.Hjr == nil {
+func (exec *ServerExec) Start() {
+	if exec.Hjr == nil {
 		return
 	}
 
-	go sendClientInputToExec(machineExec)
-	go sendExecOutputToWebsockets(machineExec)
+	go sendClientInputToExec(exec)
+	go sendExecOutputToWebsockets(exec)
 }
 
-func sendClientInputToExec(machineExec *ServerExec) {
+func sendClientInputToExec(exec *ServerExec) {
 	for {
-		data := <-machineExec.MsgChan
-		if _, err := machineExec.Hjr.Conn.Write(data); err != nil {
-			fmt.Println("Failed to write data to exec with id ", machineExec.ID, " Cause: ", err.Error())
+		data := <-exec.MsgChan
+		if _, err := exec.Hjr.Conn.Write(data); err != nil {
+			fmt.Println("Failed to write data to exec with id ", exec.ID, " Cause: ", err.Error())
 			return
 		}
 	}
 }
 
-func sendExecOutputToWebsockets(machineExec *ServerExec) {
-	hjReader := machineExec.Hjr.Reader
+func sendExecOutputToWebsockets(exec *ServerExec) {
+	hjReader := exec.Hjr.Reader
 	buf := make([]byte, BufferSize)
 	var buffer bytes.Buffer
 
@@ -112,7 +112,7 @@ func sendExecOutputToWebsockets(machineExec *ServerExec) {
 		}
 
 		if rbSize > 0 {
-			machineExec.WriteDataToWsConnections(buffer.Bytes())
+			exec.WriteDataToWsConnections(buffer.Bytes())
 		}
 
 		buffer.Reset()

@@ -18,7 +18,6 @@ type MachineIdentifier struct {
 	WsId        string `json:"workspaceId"`
 }
 
-// Todo code Refactoring: MachineExec should be simple object for exec creation, without any business logic
 type MachineExec struct {
 	Identifier MachineIdentifier `json:"identifier"`
 	Cmd        []string          `json:"cmd"`

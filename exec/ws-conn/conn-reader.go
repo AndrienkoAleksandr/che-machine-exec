@@ -18,8 +18,8 @@ import (
 	"log"
 )
 
-func ReadWebSocketData(machineExec *server.ServerExec, wsConn *websocket.Conn) {
-	defer machineExec.RemoveWebSocket(wsConn)
+func ReadWebSocketData(exec *server.ServerExec, wsConn *websocket.Conn) {
+	defer exec.RemoveWebSocket(wsConn)
 
 	for {
 		msgType, wsBytes, err := wsConn.ReadMessage()
@@ -32,6 +32,6 @@ func ReadWebSocketData(machineExec *server.ServerExec, wsConn *websocket.Conn) {
 			continue
 		}
 
-		machineExec.MsgChan <- wsBytes
+		exec.MsgChan <- wsBytes
 	}
 }
