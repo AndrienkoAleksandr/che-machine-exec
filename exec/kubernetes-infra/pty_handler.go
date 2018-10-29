@@ -19,7 +19,7 @@ import (
 
 // Kubernetes pty handler
 type PtyHandlerImpl struct {
-	serverExec *server.ServerExec
+	serverExec *server.ExecSession
 }
 
 func (t PtyHandlerImpl) Read(p []byte) (int, error) {

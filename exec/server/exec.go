@@ -14,7 +14,7 @@ import (
 
 const BufferSize = 8192
 
-type ServerExec struct { // todo rename... ExecSession?
+type ExecSession struct {
 	*model.MachineExec
 
 	// Todo Refactoring this code is docker specific. Create separated code layer and move it.
@@ -33,9 +33,9 @@ type ServerExec struct { // todo rename... ExecSession?
 	Buffer *line_buffer.LineRingBuffer
 }
 
-// split kubernetes and docker specific logic to the ServerKubernetesExec and DockerKubernetesExec based on ServerExec
-func NewServerExec(machineExec *model.MachineExec, execId string, executor remotecommand.Executor) *ServerExec  {
-	return &ServerExec{
+// split kubernetes and docker specific logic to the ServerKubernetesExec and DockerKubernetesExec based on ExecSession
+func NewServerExec(machineExec *model.MachineExec, execId string, executor remotecommand.Executor) *ExecSession {
+	return &ExecSession{
 		MachineExec: machineExec,
 		ExecId: execId,
 		MsgChan: make(chan []byte),
@@ -45,7 +45,7 @@ func NewServerExec(machineExec *model.MachineExec, execId string, executor remot
 	}
 }
 
-func (exec *ServerExec) Start() {
+func (exec *ExecSession) Start() {
 	if exec.Hjr == nil {
 		return
 	}
@@ -54,7 +54,7 @@ func (exec *ServerExec) Start() {
 	go sendExecOutputToWebsockets(exec)
 }
 
-func sendClientInputToExec(exec *ServerExec) {
+func sendClientInputToExec(exec *ExecSession) {
 	for {
 		data := <-exec.MsgChan
 		if _, err := exec.Hjr.Conn.Write(data); err != nil {
@@ -64,7 +64,7 @@ func sendClientInputToExec(exec *ServerExec) {
 	}
 }
 
-func sendExecOutputToWebsockets(exec *ServerExec) {
+func sendExecOutputToWebsockets(exec *ExecSession) {
 	hjReader := exec.Hjr.Reader
 	buf := make([]byte, BufferSize)
 	var buffer bytes.Buffer
