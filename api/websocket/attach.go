@@ -46,7 +46,6 @@ func Attach(w http.ResponseWriter, r *http.Request, restParmas rest.Params) erro
 	if err = exec.GetExecManager().Attach(id, wsConn); err != nil {
 		log.Println("Attach connection is refused with id: ", id, err.Error())
 		log.Println("Try replace this exec by another one for test purpose ...")
-		exec.CreateExecManager().Create(exec.GetExecManager().GetById(id))
 		return err
 	}
 
