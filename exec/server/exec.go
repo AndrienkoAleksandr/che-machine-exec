@@ -3,14 +3,13 @@ package server
 import (
 	"github.com/docker/docker/api/types"
 	"github.com/eclipse/che-machine-exec/api/model"
+	"github.com/eclipse/che-machine-exec/transport"
 	"k8s.io/client-go/tools/remotecommand"
 	"bytes"
 	"fmt"
 
 	"github.com/eclipse/che-machine-exec/line-buffer"
-	"github.com/gorilla/websocket"
 	"log"
-	"sync"
 )
 
 const BufferSize = 8192
@@ -22,9 +21,8 @@ type ServerExec struct { // todo rename... ExecSession?
 	ExecId string
 	Hjr    *types.HijackedResponse
 
-	// Todo Refactoring: this code is websocket connection specific. Move this code.
-	WsConnsLock *sync.Mutex
-	WsConns     []*websocket.Conn
+	ConnHandler *transport.ConnectionHandler
+
 	MsgChan     chan []byte
 
 	// Todo Refactoring: this code is kubernetes specific. Create separated code layer and move it.
@@ -41,36 +39,10 @@ func NewServerExec(machineExec *model.MachineExec, execId string, executor remot
 		MachineExec: machineExec,
 		ExecId: execId,
 		MsgChan: make(chan []byte),
-		WsConnsLock: &sync.Mutex{},
-		WsConns: make([]*websocket.Conn, 0),
 		Executor: executor,
+		ConnHandler: transport.NewConnHandler(),
 		SizeChan : make(chan remotecommand.TerminalSize),
 	}
-}
-
-func (exec *ServerExec) AddWebSocket(wsConn *websocket.Conn) {
-	defer exec.WsConnsLock.Unlock()
-	exec.WsConnsLock.Lock()
-
-	exec.WsConns = append(exec.WsConns, wsConn)
-}
-
-func (exec *ServerExec) RemoveWebSocket(wsConn *websocket.Conn) {
-	defer exec.WsConnsLock.Unlock()
-	exec.WsConnsLock.Lock()
-
-	for index, wsConnElem := range exec.WsConns {
-		if wsConnElem == wsConn {
-			exec.WsConns = append(exec.WsConns[:index], exec.WsConns[index+1:]...)
-		}
-	}
-}
-
-func (exec *ServerExec) getWSConns() []*websocket.Conn {
-	defer exec.WsConnsLock.Unlock()
-	exec.WsConnsLock.Lock()
-
-	return exec.WsConns
 }
 
 func (exec *ServerExec) Start() {
@@ -112,27 +84,12 @@ func sendExecOutputToWebsockets(exec *ServerExec) {
 		}
 
 		if rbSize > 0 {
-			exec.WriteDataToWsConnections(buffer.Bytes())
+			exec.ConnHandler.WriteDataToWsConnections(buffer.Bytes())
 		}
 
 		buffer.Reset()
 		if i < rbSize {
 			buffer.Write(buf[i:rbSize])
-		}
-	}
-}
-
-func (exec *ServerExec) WriteDataToWsConnections(data []byte) {
-	defer exec.WsConnsLock.Unlock()
-	exec.WsConnsLock.Lock()
-
-	// save data to restore
-	exec.Buffer.Write(data)
-	// send data to the all connected clients
-	for _, wsConn := range exec.WsConns {
-		if err := wsConn.WriteMessage(websocket.TextMessage, data); err != nil {
-			fmt.Println("failed to write to ws-conn message!!!" + err.Error())
-			exec.RemoveWebSocket(wsConn)
 		}
 	}
 }

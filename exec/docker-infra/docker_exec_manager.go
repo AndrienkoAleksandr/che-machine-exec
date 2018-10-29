@@ -20,7 +20,6 @@ import (
 	"github.com/eclipse/che-machine-exec/api/model"
 	"github.com/eclipse/che-machine-exec/exec/registry"
 	"github.com/eclipse/che-machine-exec/exec/server"
-	wsConnHandler "github.com/eclipse/che-machine-exec/exec/ws-conn"
 	"github.com/eclipse/che-machine-exec/line-buffer"
 	"github.com/gorilla/websocket"
 	"golang.org/x/net/context"
@@ -88,9 +87,9 @@ func (manager DockerMachineExecManager) Attach(id int, conn *websocket.Conn) err
 		return errors.New("Exec '" + strconv.Itoa(id) + "' to attach was not found")
 	}
 
-	exec.AddWebSocket(conn)
-	go wsConnHandler.ReadWebSocketData(exec, conn)
-	go wsConnHandler.SendPingMessage(conn)
+	exec.ConnHandler.AddConnection(conn)
+	go exec.ConnHandler.ReadDataFromConnections(exec.MsgChan, conn)
+	go exec.ConnHandler.SendPingMessage(conn)
 
 	if exec.Buffer != nil {
 		// restore previous output.

@@ -30,7 +30,7 @@ func (t PtyHandlerImpl) Read(p []byte) (int, error) {
 
 func (t PtyHandlerImpl) Write(p []byte) (int, error) {
 
-	t.serverExec.WriteDataToWsConnections(p)
+	t.serverExec.ConnHandler.WriteDataToWsConnections(p)
 
 	return len(p), nil
 }

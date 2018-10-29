@@ -35,7 +35,6 @@ func Attach(w http.ResponseWriter, r *http.Request, restParmas rest.Params) erro
 	if err != nil {
 		return errors.New("failed to parse id")
 	}
-	log.Println("Parsed id", id)
 
 	wsConn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
