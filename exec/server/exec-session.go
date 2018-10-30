@@ -10,7 +10,7 @@ type ExecSession interface {
 	Id() int
 	SetId(id int)
 
-	Stream()
+	Stream() error
 }
 
 type ExecSessionBase struct {

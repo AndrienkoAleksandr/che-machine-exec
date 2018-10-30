@@ -128,16 +128,9 @@ func (manager KubernetesExecManager) Attach(id int, conn *websocket.Conn) error 
 		return conn.WriteMessage(websocket.TextMessage, []byte(restoreContent))
 	}
 
-	ptyHandler := PtyHandlerImpl{serverExec: exec}
 	exec.Buffer = line_buffer.New()
 
-	return exec.Executor.Stream(remotecommand.StreamOptions{
-		Stdin:             ptyHandler,
-		Stdout:            ptyHandler,
-		Stderr:            ptyHandler,
-		TerminalSizeQueue: ptyHandler,
-		Tty:               exec.Tty,
-	})
+	return exec.Stream()
 }
 
 func (manager KubernetesExecManager) Resize(id int, cols uint, rows uint) error {

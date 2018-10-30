@@ -6,6 +6,7 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/eclipse/che-machine-exec/api/model"
 	"github.com/eclipse/che-machine-exec/exec/server"
+	"github.com/pkg/errors"
 	"log"
 )
 
@@ -25,13 +26,15 @@ func NewDockerExecSession(machineExec *model.MachineExec, ExecId string) *Docker
 	}
 }
 
-func (execSession *DockerExecSession) Stream() {
+func (execSession *DockerExecSession) Stream() error {
 	if execSession.Hjr == nil {
-		return
+		return errors.New("Exec is not attached yet.")
 	}
 
 	go sendClientInputToExec(execSession)
 	go sendExecOutputToWebSockets(execSession)
+
+	return nil
 }
 
 func sendClientInputToExec(exec *DockerExecSession) {
@@ -52,7 +55,6 @@ func sendExecOutputToWebSockets(exec *DockerExecSession) {
 	for {
 		rbSize, err := hjReader.Read(buf)
 		if err != nil {
-			//todo handle EOF error
 			fmt.Println("failed to read exec stdOut/stdError stream!!! " + err.Error())
 			return
 		}

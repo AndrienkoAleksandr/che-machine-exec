@@ -21,6 +21,14 @@ func NewKubernetesExecSession(machineExec *model.MachineExec, executor remotecom
 	}
 }
 
-func (KubernetesExecSession) Stream() {
-	// todo complete
+func (kSession *KubernetesExecSession) Stream() error {
+	ptyHandler := PtyHandlerImpl{serverExec: kSession}
+
+	return kSession.Executor.Stream(remotecommand.StreamOptions{
+		Stdin:             ptyHandler,
+		Stdout:            ptyHandler,
+		Stderr:            ptyHandler,
+		TerminalSizeQueue: ptyHandler,
+		Tty:               kSession.Tty,
+	})
 }
