@@ -194,13 +194,13 @@ Create new workspace from stack 'Java Theia on Kubernetes'. Run workspace. When 
 
 First of all clone Eclipse CHE:
 
-```
+```bash
 $ git clone https://github.com/eclipse/che.git ~/projects/che
 ```
 
 For test purpose it's not nessure build all Eclipse CHE, build 'assembly-main' maven module is pretty enough:
 
-```
+```bash
 $ cd ~/projects/che/assembly/assembly-main
 $ mvn clean install -DskipTests
 ```
@@ -230,18 +230,43 @@ Run this task with help menu tasks: `Task` => `Run...`
 After that Theia should display widget with output content: 'echo hello'
 
 
+# Test che-machine-exec with help websocket client
+
+## Connect to che-machine-exec
 Create websocket connection to the server side:
-http://some/url:port/connect
- You will get "Hello" from server side:
-{"jsonrpc":"2.0","method":"connected","params":{"time":"2018-09-06T14:40:28.06868112Z","channel":"tunnel-1","tunnel":"tunnel-1","text":"Hello!"}}
- You can send request to create new exec:
+`http://che-machine-exec-url:4444/connect`
+
+You will get "Hello" from server side:
+`{"jsonrpc":"2.0","method":"connected","params":{"time":"2018-09-06T14:40:28.06868112Z","channel":"tunnel-1","tunnel":"tunnel-1","text":"Hello!"}}`
+
+You can send request to create new exec. For that you need to now workspaceId and machine name:
+
 {"jsonrpc":"2.0","id":0,"method":"create","params":{"identifier":{"machineName":"ws/machine-exec","workspaceId":"workspacen4b1ik9bxz1gqnoe"},"cmd":["/bin/bash"],"tty":true}}
-You will get response(If it was successfully):
-{"jsonrpc":"2.0","id":0,"result":1} // created exec with id: 1
- resize exec:
-request:
-{"jsonrpc":"2.0","id":2,"method":"resize","params":{"id":2,"cols":235,"rows":24}}
-response:
-{"jsonrpc":"2.0","id":2,"result":{"id":2,"text":"Exec with id 2  was successfully resized"}}
- check if exec is still alive (useful for restore output feature):
- To attach and get output you should created separated websocket connection:
+
+If everythin is OK, You will get response:
+`{"jsonrpc":"2.0","id":0,"result":1}`  // created exec with id: 1
+
+## Resize exec
+To resize machine exec send request:
+`{"jsonrpc":"2.0","id":2,"method":"resize","params":{"id":1,"cols":235,"rows":24}}`
+
+Response:
+`{"jsonrpc":"2.0","id":2,"result":{"id":2,"text":"Exec with id 2  was successfully resized"}}`
+
+## Check if che-machine-exec is exists
+Check if exec with known id is exists (useful for restore output feature):
+
+`{"jsonrpc":"2.0","id":0,"method":"check","params":{"id":1}}`
+
+Response:
+
+{"jsonrpc": "2.0","id": 0,"result": 1}
+
+In case if machine exec was not found result will -1.
+
+## Attach to machine-exec
+To get machine exec output and send text data to exec by id, You need to create separated websocket connection:
+
+ `http://che-machine-exec-url:4444/attach/{id}`
+
+ And you can send some data to machine exec with help this attach connection too.

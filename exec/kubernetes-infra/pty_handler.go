@@ -13,13 +13,12 @@
 package kubernetes_infra
 
 import (
-	"github.com/eclipse/che-machine-exec/exec/server"
 	"k8s.io/client-go/tools/remotecommand"
 )
 
 // Kubernetes pty handler
 type PtyHandlerImpl struct {
-	serverExec *server.ExecSession
+	serverExec *KubernetesExecSession
 }
 
 func (t PtyHandlerImpl) Read(p []byte) (int, error) {
@@ -30,6 +29,8 @@ func (t PtyHandlerImpl) Read(p []byte) (int, error) {
 
 func (t PtyHandlerImpl) Write(p []byte) (int, error) {
 
+	// save data to restore
+	t.serverExec.Buffer.Write(p)
 	t.serverExec.ConnHandler.WriteDataToWsConnections(p)
 
 	return len(p), nil

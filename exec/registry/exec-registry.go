@@ -9,7 +9,7 @@ import (
 // Exec in memory storage
 type ExecRegistry struct {
 	mutex   *sync.Mutex
-	execMap map[int]*server.ExecSession
+	execMap map[int]server.ExecSession
 	prevExecID uint64
 }
 
@@ -17,19 +17,19 @@ func NewExecRegistry() *ExecRegistry {
 	return &ExecRegistry{
 		prevExecID:0,
 		mutex:   &sync.Mutex{},
-		execMap: make(map[int]*server.ExecSession),
+		execMap: make(map[int]server.ExecSession),
 	}
 }
 
 // Add new exec to storage
-func (registry *ExecRegistry) Add(exec *server.ExecSession) int  {
+func (registry *ExecRegistry) Add(exec server.ExecSession) int  {
 	defer registry.mutex.Unlock()
 
 	registry.mutex.Lock()
-	exec.ID = int(atomic.AddUint64(&registry.prevExecID, 1))
-	registry.execMap[exec.ID] = exec
+	exec.SetId(int(atomic.AddUint64(&registry.prevExecID, 1)))
+	registry.execMap[exec.Id()] = exec
 
-	return exec.ID
+	return exec.Id()
 }
 
 // Remove exec from storage
@@ -41,7 +41,7 @@ func (registry *ExecRegistry) Remove(id int) {
 }
 
 // Get exec by Id or nil if exec with such id doesn't exists
-func (registry *ExecRegistry) GetById(id int) *server.ExecSession {
+func (registry *ExecRegistry) GetById(id int) server.ExecSession {
 	defer registry.mutex.Unlock()
 
 	registry.mutex.Lock()

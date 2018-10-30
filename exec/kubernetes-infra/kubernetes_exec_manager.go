@@ -16,7 +16,6 @@ import (
 	"errors"
 	"github.com/eclipse/che-machine-exec/api/model"
 	"github.com/eclipse/che-machine-exec/exec/registry"
-	"github.com/eclipse/che-machine-exec/exec/server"
 	"github.com/eclipse/che-machine-exec/line-buffer"
 	"github.com/gorilla/websocket"
 	"k8s.io/api/core/v1"
@@ -25,6 +24,7 @@ import (
 	corev1 "k8s.io/client-go/kubernetes/typed/core/v1"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/remotecommand"
+	"log"
 	"strconv"
 )
 
@@ -99,23 +99,23 @@ func (manager KubernetesExecManager) Create(machineExec *model.MachineExec) (int
 		return -1, err
 	}
 
-	exec := server.NewServerExec(machineExec, "", executor )
+	exec := NewKubernetesExecSession(machineExec, executor)
 
 	return manager.registry.Add(exec), nil
 }
 
 func (manager KubernetesExecManager) Check(id int) (int, error) {
-	exec := manager.registry.GetById(id)
-	if exec == nil {
-		return -1, errors.New("Exec '" + strconv.Itoa(id) + "' was not found")
+	exec, err := manager.getSessionById(id)
+	if err != nil {
+		return -1, err
 	}
-	return exec.ID, nil
+	return exec.Id(), nil
 }
 
 func (manager KubernetesExecManager) Attach(id int, conn *websocket.Conn) error {
-	exec := manager.registry.GetById(id)
-	if exec == nil {
-		return errors.New("Exec '" + strconv.Itoa(id) + "' to attach was not found")
+	exec, err := manager.getSessionById(id)
+	if err != nil {
+		return err
 	}
 
 	exec.ConnHandler.AddConnection(conn)
@@ -141,12 +141,29 @@ func (manager KubernetesExecManager) Attach(id int, conn *websocket.Conn) error 
 }
 
 func (manager KubernetesExecManager) Resize(id int, cols uint, rows uint) error {
-	exec := manager.registry.GetById(id)
-	if exec == nil {
+	exec, err := manager.getSessionById(id)
+	if err != nil {
 		return errors.New("Exec to resize '" + strconv.Itoa(id) + "' was not found")
 	}
 
 	exec.SizeChan <- remotecommand.TerminalSize{Width: uint16(cols), Height: uint16(rows)}
 	return nil
+}
+
+func (manager KubernetesExecManager) getSessionById(id int) (*KubernetesExecSession, error)  {
+	execSession := manager.registry.GetById(id)
+
+	if execSession == nil {
+		log.Println("Exec session was not found for exec with id: " + strconv.Itoa(id))
+		return nil, errors.New("Exec session was not found for exec with id: " + strconv.Itoa(id))
+	}
+
+	kSession, ok := execSession.(*KubernetesExecSession)
+	if !ok {
+		log.Println("stored incompatible exec session type for kubernetes infrastructure. Exec id: " + strconv.Itoa(id))
+		return nil, errors.New("stored incompatible exec session type for kubernetes infrastructure. Exec id: " + strconv.Itoa(id))
+	}
+
+	return kSession, nil
 }
 

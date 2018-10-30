@@ -25,6 +25,5 @@ type MachineExec struct {
 	Cols       int               `json:"cols"`
 	Rows       int               `json:"rows"`
 
-	// unique client id, real execId should be hidden from client to prevent serialization
 	ID int `json:"id"`
 }

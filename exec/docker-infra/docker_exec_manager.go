@@ -19,10 +19,10 @@ import (
 	"github.com/docker/docker/client"
 	"github.com/eclipse/che-machine-exec/api/model"
 	"github.com/eclipse/che-machine-exec/exec/registry"
-	"github.com/eclipse/che-machine-exec/exec/server"
 	"github.com/eclipse/che-machine-exec/line-buffer"
 	"github.com/gorilla/websocket"
 	"golang.org/x/net/context"
+	"log"
 	"strconv"
 )
 
@@ -68,23 +68,23 @@ func (manager DockerMachineExecManager) Create(machineExec *model.MachineExec) (
 		return -1, err
 	}
 
-	exec := server.NewServerExec(machineExec, resp.ID, nil)
+	exec := NewDockerExecSession(machineExec, resp.ID)
 
 	return manager.registry.Add(exec), nil
 }
 
 func (manager DockerMachineExecManager) Check(id int) (int, error) {
-	exec := manager.registry.GetById(id)
-	if exec == nil {
-		return -1, errors.New("Exec '" + strconv.Itoa(id) + "' was not found")
+	exec, err := manager.getSessionById(id)
+	if err != nil {
+		return -1, err
 	}
-	return exec.ID, nil
+	return exec.Id(), nil
 }
 
 func (manager DockerMachineExecManager) Attach(id int, conn *websocket.Conn) error {
-	exec := manager.registry.GetById(id)
-	if exec == nil {
-		return errors.New("Exec '" + strconv.Itoa(id) + "' to attach was not found")
+	exec, err := manager.getSessionById(id)
+	if err != nil {
+		return err
 	}
 
 	exec.ConnHandler.AddConnection(conn)
@@ -108,15 +108,15 @@ func (manager DockerMachineExecManager) Attach(id int, conn *websocket.Conn) err
 	exec.Hjr = &hjr
 	exec.Buffer = line_buffer.New()
 
-	exec.Start()
+	exec.Stream()
 
 	return nil
 }
 
 func (manager DockerMachineExecManager) Resize(id int, cols uint, rows uint) error {
-	exec := manager.registry.GetById(id)
-	if exec == nil {
-		return errors.New("Exec to resize '" + strconv.Itoa(id) + "' was not found")
+	exec, err := manager.getSessionById(id)
+	if err != nil {
+		return err
 	}
 
 	resizeParam := types.ResizeOptions{Height: rows, Width: cols}
@@ -125,4 +125,21 @@ func (manager DockerMachineExecManager) Resize(id int, cols uint, rows uint) err
 	}
 
 	return nil
+}
+
+func (manager DockerMachineExecManager) getSessionById(id int) (*DockerExecSession, error) {
+	execSession := manager.registry.GetById(id)
+
+	if execSession == nil {
+		log.Println("Exec session was not found for exec with id: " + strconv.Itoa(id))
+		return nil, errors.New("Exec session was not found for exec with id: " + strconv.Itoa(id))
+	}
+
+	dSession, ok := execSession.(*DockerExecSession)
+	if !ok {
+		log.Println("Stored incompatible exec session type for docker infrastructure. Exec id: " + strconv.Itoa(id))
+		return nil, errors.New("stored incompatible exec session type for docker infrastructure. Exec id: " + strconv.Itoa(id))
+	}
+
+	return dSession, nil
 }
