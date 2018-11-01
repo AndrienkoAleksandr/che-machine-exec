@@ -232,22 +232,23 @@ After that Theia should display widget with output content: 'echo hello'
 
 # Test che-machine-exec with help websocket client
 
-## Connect to che-machine-exec
+## Connect to the che-machine-exec
 Create websocket connection to the server side:
 `http://che-machine-exec-url:4444/connect`
 
 You will get "Hello" from server side:
 `{"jsonrpc":"2.0","method":"connected","params":{"time":"2018-09-06T14:40:28.06868112Z","channel":"tunnel-1","tunnel":"tunnel-1","text":"Hello!"}}`
 
-You can send request to create new exec. For that you need to now workspaceId and machine name:
+You can send request to create new exec. For that you need to know workspaceId and machine name:
 
 {"jsonrpc":"2.0","id":0,"method":"create","params":{"identifier":{"machineName":"ws/machine-exec","workspaceId":"workspacen4b1ik9bxz1gqnoe"},"cmd":["/bin/bash"],"tty":true}}
 
-If everythin is OK, You will get response:
+If everythin is ok, You will get response:
 `{"jsonrpc":"2.0","id":0,"result":1}`  // created exec with id: 1
 
-## Resize exec
-To resize machine exec send request:
+## Resize che-machine-exec
+
+To resize che-machine-exec send request:
 `{"jsonrpc":"2.0","id":2,"method":"resize","params":{"id":1,"cols":235,"rows":24}}`
 
 Response:
@@ -262,11 +263,12 @@ Response:
 
 {"jsonrpc": "2.0","id": 0,"result": 1}
 
-In case if machine exec was not found result will -1.
+In case if che-machine-exec was not found result will -1.
 
-## Attach to machine-exec
+## Attach to the che-machine-exec
 To get machine exec output and send text data to exec by id, You need to create separated websocket connection:
 
  `http://che-machine-exec-url:4444/attach/{id}`
 
  And you can send some data to machine exec with help this attach connection too.
+ > Note: This stuff should be improved: https://github.com/eclipse/che-machine-exec/issues/4

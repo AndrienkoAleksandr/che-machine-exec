@@ -31,6 +31,7 @@ func (t PtyHandlerImpl) Write(p []byte) (int, error) {
 
 	// save data to restore
 	t.serverExec.Buffer.Write(p)
+
 	t.serverExec.ConnHandler.WriteDataToWsConnections(p)
 
 	return len(p), nil
