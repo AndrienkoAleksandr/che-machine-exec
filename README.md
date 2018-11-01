@@ -213,7 +213,7 @@ Create new terminal with help main menu of the Theia: `File` => `New multy-machi
 # Test che-machine-exec with help che-theia-task-plugin
 
 Eclipse CHE workspace created from Theia stack contains included che-theia-task-plugin. With help this plugin You can test che-machine-exec.
-Create new Theia task for your project: un the project root create folder `.theia`. Create `tasks.json` file in the folder `.theia` with such content:
+Create new Theia task for your project: in the project root create folder `.theia`. Create `tasks.json` file in the folder `.theia` with such content:
 
 ```bash
 {
